@@ -221,6 +221,9 @@ if __name__ == '__main__':
         # Initialize a variable to track the Shift key state
         capitalized = False
 
+        # Initialize a dictionary to track the state of each key
+        key_state = {}
+
         with open(f"/dev/input/{event}", "rb") as file:
             while True:
                 # Event FORMAT: {timestamp, time_in_microseconds, event_type, event_code, event_value}
@@ -242,7 +245,13 @@ if __name__ == '__main__':
                                 char_pressed = uppercase_key
                             else:
                                 char_pressed = lowercase_key
-                            print(char_pressed)
+
+                            # Check if the key was previously not pressed
+                            if event_code not in key_state or key_state[event_code] == 0:
+                                print(char_pressed)
+
+                            # Update the key state
+                            key_state[event_code] = event_value
                     else:
                         print(f"[+] Key code {event_code} not mapped to a character")
 
@@ -251,12 +260,3 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         sys.exit("[+] ERROR: KeyboardInterrupt was called! (Now terminating program...)")
 
-    except IOError as e:
-        sys.exit(f"[+] ERROR: An error has occurred while reading the event file: {e}")
-    except KeyboardInterrupt:
-        sys.exit("[+] ERROR: KeyboardInterrupt was called! (Now terminating program...)")
-
-    except IOError as e:
-        sys.exit(f"[+] ERROR: An error has occurred while reading the event file: {e}")
-    except KeyboardInterrupt:
-        sys.exit("[+] ERROR: KeyboardInterrupt was called! (Now terminating program...)")
