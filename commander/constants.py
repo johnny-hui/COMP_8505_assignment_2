@@ -7,10 +7,10 @@ MIN_QUEUE_SIZE = 5
 
 
 # MENU Constants
-MENU_BANNER = "===================================== \\ COMMANDER PROGRAM // ====================================="
+OPENING_BANNER = "===================================== || COMMANDER PROGRAM || ====================================="
 MENU_CLOSING_BANNER = ("==================================================================================="
                        "===============")
-SERVER_INFO_MSG = "[+] Commander server is listening on: {}"
+SERVER_INFO_MSG = "[+] Commander server is listening on (IP: {} Port: {})"
 INVALID_INPUT_MENU_ERROR = "[+] ERROR: Invalid input was provided to menu: {}"
 INITIAL_VICTIM_IP_MSG = "[+] Victim IP (from argument): {}"
 INITIAL_VICTIM_PORT_MSG = "[+] Victim Port (from argument): {}"
@@ -18,7 +18,7 @@ INITIATE_VICTIM_CONNECTION_MSG = "[+] Now initiating a connection to the victim.
 SUCCESSFUL_VICTIM_CONNECTION_MSG = "[+] Successfully connected to a victim: {}"
 ERROR_VICTIM_CONNECTION_MSG = "[+] ERROR: A connection error to victim has occurred: {}"
 MENU_SELECTION_PROMPT_MSG = "[+] Enter any number above to perform any of the following actions displayed: "
-INVALID_MENU_SELECTION_PROMPT = "[+] INVALID INPUT: Please enter a valid option: "
+INVALID_MENU_SELECTION_PROMPT = "\n[+] INVALID INPUT: Please enter a valid option: "
 COMMANDER_SERVER_SOCKET_CREATION_ERROR_MSG = "[+] ERROR: An error has occurred while creating server socket: {}"
 MENU_ITEM_ONE = "1 - Start Keylogger"
 MENU_ITEM_TWO = "2 - Stop Keylogger"
@@ -44,12 +44,12 @@ PERFORM_MENU_ITEM_TEN = 10
 PERFORM_MENU_ITEM_ELEVEN = 11
 MIN_MENU_ITEM_VALUE = 1
 MAX_MENU_ITEM_VALUE = 11
-MENU_ACTION_START_MSG = "[+] ACTION SELECTED: Now performing menu item: {}..."
+MENU_ACTION_START_MSG = "\n[+] ACTION SELECTED: Now performing menu item: {}..."
 
 # MENU ITEM 5 - DISCONNECT Constants
 DISCONNECT_FROM_VICTIM_MSG = "[+] DISCONNECTING FROM VICTIM: Now disconnecting from victim {}..."
 DISCONNECT_FROM_VICTIM_SUCCESS = "[+] DISCONNECT SUCCESSFUL: Disconnection was successful!"
-
+DISCONNECT_FROM_VICTIM_ERROR = "[+] DISCONNECT ERROR: There is no such client/victim to disconnect from!"
 
 # DESTINATION IP/PORT Constants
 NO_ARG_ERROR = "[+] NO_ARG_ERROR: No arguments were passed in!"

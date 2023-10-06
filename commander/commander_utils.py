@@ -20,10 +20,12 @@ def display_menu():
     print(constants.MENU_ITEM_ELEVEN)
     print(constants.MENU_CLOSING_BANNER)
 
+
+def get_menu_selection():
     while True:
         try:
             choice = int(input(constants.MENU_SELECTION_PROMPT_MSG))
-            while not (constants.MIN_MENU_ITEM_VALUE < choice < constants.MAX_MENU_ITEM_VALUE):
+            while not (constants.MIN_MENU_ITEM_VALUE <= choice <= constants.MAX_MENU_ITEM_VALUE):
                 choice = int(input(constants.INVALID_MENU_SELECTION_PROMPT))
             break
         except ValueError as e:
@@ -36,13 +38,13 @@ def display_menu():
 def print_config(dest_ip: str, dest_port: int, server_address: tuple):
     print(constants.INITIAL_VICTIM_IP_MSG.format(dest_ip))
     print(constants.INITIAL_VICTIM_PORT_MSG.format(dest_port))
-    print(constants.SERVER_INFO_MSG.format(server_address))
+    print(constants.SERVER_INFO_MSG.format(*server_address))
     print(constants.MENU_CLOSING_BANNER)
 
 
 def parse_arguments():
     # Initialization
-    print(constants.MENU_BANNER)
+    print(constants.OPENING_BANNER)
     source_ip, source_port, destination_ip, destination_port = "", "", "", ""
 
     # GetOpt Arguments
@@ -157,7 +159,7 @@ def disconnect_from_client(sockets_list: list, connected_clients: dict,
                 print(constants.DISCONNECT_FROM_VICTIM_SUCCESS)
                 break
     else:
-        print("[+] DISCONNECT ERROR: There is no such client/victim to disconnect from!")
+        print(constants.DISCONNECT_FROM_VICTIM_ERROR)
 
 
 if __name__ == '__main__':

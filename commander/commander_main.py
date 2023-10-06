@@ -23,12 +23,15 @@ if __name__ == '__main__':
     print_config(destination_ip, destination_port, (source_ip, source_port))
     connect_to_client(sockets_to_read, connected_clients, destination_ip, destination_port)
 
+    # Display Menu
+    display_menu()
+
     while True:
         # Use select to monitor multiple sockets
         readable, _, _ = select.select(sockets_to_read, [], [])
 
         # Display menu & prompt user selection
-        command = display_menu()
+        command = get_menu_selection()
 
         for sock in readable:
             # a) Handle new connections
