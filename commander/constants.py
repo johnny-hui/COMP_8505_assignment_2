@@ -90,8 +90,8 @@ STOP_KEYWORD = "STOP"
 STOP_KEYLOGGER_PROMPT = "[+] Enter the number 2 to 'Stop Keylogger': "
 INVALID_INPUT_STOP_KEYLOGGER = "[+] INVALID INPUT: Please try again: "
 STOP_KEYLOG_RESULT_ERROR = "[+] ERROR: An error has occurred during the keylogging process : {}"
-STOP_KEYLOG_STATUS_FALSE = ("[+] ERROR: Cannot stop keylogger for this specific client (IP: {}, Port: {} as "
-                            "they're currently not running the keylogger program!")
+STOP_KEYLOG_STATUS_FALSE = ("[+] STOP KEYLOG ERROR: Cannot stop keylogger for this specific client (IP: {}, "
+                            "Port: {}) as they're currently not running the keylogger program!")
 
 # MENU ITEM 5 - DISCONNECT Constants
 DISCONNECT_FROM_VICTIM_MSG = "[+] DISCONNECTING FROM VICTIM: Now disconnecting from victim {}..."
@@ -99,6 +99,9 @@ DISCONNECT_FROM_VICTIM_SUCCESS = "[+] DISCONNECT SUCCESSFUL: Disconnection was s
 DISCONNECT_FROM_VICTIM_ERROR = "[+] DISCONNECT ERROR: There is no such client/victim to disconnect from!"
 ENTER_TARGET_IP_DISCONNECT_PROMPT = "[+] Enter victim IP address to disconnect from: "
 ENTER_TARGET_PORT_DISCONNECT_PROMPT = "[+] Enter victim port to disconnect from: "
+DISCONNECT_ERROR_KEYLOG_TRUE = ("[+] DISCONNECT ERROR: Cannot disconnect from the following client (IP: {}, Port: {}) "
+                                " as they're currently running a keylogger program!")
+
 
 # MENU ITEM 3 - TRANSFER KEYLOG Constants
 KEYLOG_FILE_NAME = "keylogger.py"
@@ -114,6 +117,9 @@ ENTER_TARGET_IP_FIND_PROMPT = "[+] Enter the target (victim) IP address to trans
 ENTER_TARGET_PORT_FIND_PROMPT = "[+] Enter the target (victim) port to transfer file to: "
 FILE_TRANSFER_NO_CONNECTED_CLIENTS_ERROR = ("[+] ERROR: Cannot transfer keylog file! : The command server is not "
                                             "connected to any clients")
+FILE_TRANSFER_KEYLOG_TRUE_ERROR = ("[+] FILE TRANSFER ERROR: Cannot disconnect from the following client (IP: {}, "
+                                   "Port: {}) as they're currently running a keylogger program!")
+
 
 # MENU ITEM 12 - Connect to a specific victim
 INVALID_INPUT_ERROR = "[+] ERROR: Invalid format for either IP address or port number was provided : {}"
