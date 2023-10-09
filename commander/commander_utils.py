@@ -291,8 +291,3 @@ def perform_menu_item_3(client_dict: dict):
         else:
             print(constants.TARGET_VICTIM_NOT_FOUND)
 
-
-if __name__ == '__main__':
-    parse_arguments()
-    display_menu()
-    # initialize_server()

@@ -51,6 +51,7 @@ PERFORM_MENU_ITEM_THIRTEEN = 13
 MIN_MENU_ITEM_VALUE = 1
 MAX_MENU_ITEM_VALUE = 13
 BYTE_LIMIT = 1024
+MIN_BUFFER_SIZE = 200
 MENU_ACTION_START_MSG = "\n[+] ACTION SELECTED: Now performing menu item {}:"
 
 # GENERAL CONSTANTS
@@ -73,12 +74,14 @@ STATUS_TRUE = "TRUE"
 STATUS_FALSE = "FALSE"
 START_SIGNAL_EXECUTE_KEYLOG = "[+] SENDING SIGNAL: Sending a signal to client/victim to execute {}"
 MISSING_KEYLOG_FILE_MSG = "[+] TIP: Enter the number 3 to initiate a transfer of the keylog file to client/victim"
+KEYLOG_OPERATION_SUCCESSFUL = "[+] OPERATION SUCCESSFUL: Keylog file saved on client/victim device!"
+KEYLOG_ERROR_MSG = "[+] ERROR: An error has occurred during the execution of keylogger: {}"
 
 
 # MENU ITEM 2 - Stop Keylogger constants
 STOP_KEYLOGGER_PROMPT = ("[+] ERROR: This option can only be called when starting a keylogger (menu option 1) "
                          "on victim/client")
-
+STOP_KEYWORD = "STOP"
 
 # MENU ITEM 5 - DISCONNECT Constants
 DISCONNECT_FROM_VICTIM_MSG = "[+] DISCONNECTING FROM VICTIM: Now disconnecting from victim {}..."
