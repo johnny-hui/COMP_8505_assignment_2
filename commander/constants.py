@@ -81,6 +81,8 @@ KEYLOG_STATUS_TRUE_ERROR = "[+] This specific client (IP: {}, Port: {}) is alrea
 KEYLOG_STATUS_TRUE_ERROR_SUGGEST = "[+] TIP: Stop the keylogger for this specific client using menu item 2"
 STOP_KEYLOG_SUGGESTION_MSG = ("[+] TIP: To save and record keystrokes for this client (IP: {}, Port: {}), select "
                               "menu item 2 (Stop Keylogger) after return to main menu")
+ENTER_TARGET_IP_START_KEYLOG = "[+] Enter victim IP address to start keylogger program on: "
+ENTER_TARGET_PORT_START_KEYLOG = "[+] Enter victim port to start keylogger program on: "
 
 # MENU ITEM 2 - Stop Keylogger constants
 STOP_KEYLOG_INITIAL_MSG = "[+] [MENU ITEM 2] - Now stopping keylogger on the client/victim side..."
@@ -92,6 +94,8 @@ INVALID_INPUT_STOP_KEYLOGGER = "[+] INVALID INPUT: Please try again: "
 STOP_KEYLOG_RESULT_ERROR = "[+] ERROR: An error has occurred during the keylogging process : {}"
 STOP_KEYLOG_STATUS_FALSE = ("[+] STOP KEYLOG ERROR: Cannot stop keylogger for this specific client (IP: {}, "
                             "Port: {}) as they're currently not running the keylogger program!")
+ENTER_TARGET_IP_STOP_KEYLOG = "[+] Enter victim IP address to stop keylogger program on: "
+ENTER_TARGET_PORT_STOP_KEYLOG = "[+] Enter victim port to stop keylogger program on: "
 
 # MENU ITEM 5 - DISCONNECT Constants
 DISCONNECT_FROM_VICTIM_MSG = "[+] DISCONNECTING FROM VICTIM: Now disconnecting from victim {}..."
@@ -112,14 +116,14 @@ FILE_TRANSFER_ERROR = "[+] ERROR: An error has occurred during file transfer : {
 END_OF_FILE_SIGNAL = b"END_OF_FILE"
 VICTIM_ACK = "ACK"
 TARGET_VICTIM_NOT_FOUND = "[+] ERROR: Target victim not found!"
-ENTER_TARGET_IP_FIND_PROMPT = "[+] Enter the target (victim) IP address to transfer file to: "
-ENTER_TARGET_PORT_FIND_PROMPT = "[+] Enter the target (victim) port to transfer file to: "
+ENTER_TARGET_IP_FIND_PROMPT = "[+] Enter the target (victim) IP address to transfer keylog program to: "
+ENTER_TARGET_PORT_FIND_PROMPT = "[+] Enter the target (victim) port to transfer keylog program to: "
 FILE_TRANSFER_NO_CONNECTED_CLIENTS_ERROR = ("[+] ERROR: Cannot transfer keylog file! : The command server is not "
                                             "connected to any clients")
 FILE_TRANSFER_KEYLOG_TRUE_ERROR = ("[+] FILE TRANSFER ERROR: Cannot transfer keylog program to the following client ("
                                    "IP: {}, Port: {}) as they're currently running a keylogger program!")
 
-# MENU ITEM 4 - GET KEYLOG FILE Constants
+# MENU ITEM 4 - GET KEYLOG FILE(S) FROM CLIENT/VICTIM Constants
 TRANSFER_KEYLOG_FILE_SIGNAL = "TRANSFER FILE"
 GET_KEYLOG_FILE_NO_CLIENTS_ERROR = "[+] GET_KEYLOG_FILE_ERROR: The command server is not connected to any clients"
 GET_KEYLOG_FILE_KEYLOG_TRUE_ERROR = (
@@ -137,6 +141,8 @@ FILE_CANNOT_OPEN_TO_SENDER = "File has been received, but is either corrupted or
 RECEIVING_FILE_MSG = "[+] Receiving file: {}"
 WRITE_BINARY_MODE = "wb"
 TRANSFER_SUCCESS_MSG = "[+] FILE TRANSFER SUCCESSFUL: {} has been transferred successfully!"
+ENTER_TARGET_IP_GET_FILES = "[+] Enter the target (victim) IP address to receive recorded keylog files from: "
+ENTER_TARGET_PORT_GET_FILES = "[+] Enter the target (victim) port to receive recorded keylog files from: "
 
 
 # MENU ITEM 12 - Connect to a specific victim
