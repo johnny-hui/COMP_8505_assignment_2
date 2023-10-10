@@ -278,9 +278,9 @@ def __is_keylogging(status: bool, client_ip: str, client_port: int, error_msg: s
         print(constants.MENU_CLOSING_BANNER)
         return True
     else:
-        # print(error_msg.format(client_ip, client_port))
-        # print(constants.RETURN_MAIN_MENU_MSG)
-        # print(constants.MENU_CLOSING_BANNER)
+        print(error_msg.format(client_ip, client_port))
+        print(constants.RETURN_MAIN_MENU_MSG)
+        print(constants.MENU_CLOSING_BANNER)
         return False
 
 
